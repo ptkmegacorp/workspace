@@ -3,11 +3,14 @@
 Sexy OpenClaw Subagent Dash - Real-time session monitor TUI
 """
 
+import argparse
 import subprocess
 import curses
 import time
 import re
 from datetime import datetime
+
+__version__ = "1.0"
 
 def get_sessions():
     """Run openclaw sessions list and parse output."""
@@ -132,6 +135,9 @@ def draw_dash(stdscr):
         time.sleep(1)
 
 def main():
+    parser = argparse.ArgumentParser(description="Sexy OpenClaw Subagent Dash - Real-time session monitor TUI")
+    parser.add_argument("--version", action="version", version=f"Sexy OpenClaw Dash v{__version__}")
+    parser.parse_args()
     curses.wrapper(draw_dash)
 
 if __name__ == "__main__":
