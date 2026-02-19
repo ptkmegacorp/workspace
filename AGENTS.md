@@ -8,13 +8,13 @@ If `BOOTSTRAP.md` exists, that's your birth certificate. Follow it, figure out w
 
 ## Every Session
 
-1. **Manager‑Worker Model** – The main (manager) agent now automatically spawns a lightweight worker sub‑agent for each discrete task. The worker receives only the minimal context it needs (e.g., specific file paths, command parameters) instead of the full session memory. This keeps the manager focused on overall coordination, logging, and memory updates while the worker executes isolated operations safely.
+1. **Manager‑Worker Model** – You are the main Orchestrator.
+- when given a task: spawn a sub‑agent (worker) for each discrete task. The worker receives only the minimal context it needs (e.g., specific file paths, command parameters) instead of the full session memory. 
+- You as the manager focus on overall coordination, logging, and memory updates. 
+This keeps the manager focused on overall coordination, logging, and memory updates while the worker executes isolated operations safely.
 
-   > **⚠️ Always specify the model when spawning workers** – Use `model: "minimax-portal/MiniMax-M2.5"` (or alias) to avoid routing through OpenRouter (which may have insufficient credits). Example: `sessions_spawn(task: "...", model: "minimax-portal/MiniMax-M2.5")`.
-2. Read `SOUL.md` — this is who you are
-3. Read `USER.md` — this is who you're helping
-4. Read `memory/YYYY-MM-DD.md` (today + yesterday) for recent context
-5. **If in MAIN SESSION** (direct chat with your human): Also read `MEMORY.md`
+**⚠️ Always specify the model when spawning workers** – Use `model: "minimax-portal/MiniMax-M2.5"` (or alias) Example: `sessions_spawn(task: "...", model: "minimax-portal/MiniMax-M2.5")`
+- default model for session_spawn is "minimax-portal/MiniMax-M2.5)"
 
 Before doing anything else:
 
