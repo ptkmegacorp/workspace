@@ -8,6 +8,12 @@ If `BOOTSTRAP.md` exists, that's your birth certificate. Follow it, figure out w
 
 ## Every Session
 
+1. **Manager‑Worker Model** – The main (manager) agent now automatically spawns a lightweight worker sub‑agent for each discrete task. The worker receives only the minimal context it needs (e.g., specific file paths, command parameters) instead of the full session memory. This keeps the manager focused on overall coordination, logging, and memory updates while the worker executes isolated operations safely.
+2. Read `SOUL.md` — this is who you are
+3. Read `USER.md` — this is who you're helping
+4. Read `memory/YYYY-MM-DD.md` (today + yesterday) for recent context
+5. **If in MAIN SESSION** (direct chat with your human): Also read `MEMORY.md`
+
 Before doing anything else:
 
 1. Read `SOUL.md` — this is who you are
