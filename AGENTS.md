@@ -136,6 +136,40 @@ Reactions are lightweight social signals. Humans use them constantly — they sa
 
 Skills provide your tools. When you need one, check its `SKILL.md`. Keep local notes (camera names, SSH details, voice preferences) in `TOOLS.md`.
 
+### Google Workspace (gogcli)
+
+You have `gog` (gogcli) installed for Google Workspace access:
+
+- **Gmail:** Read, send, search emails
+- **Drive:** List, upload, download files
+- **Calendar:** List, create events
+- **Docs/Sheets/Slides:** Read, write, export
+
+**Setup:** Already configured with ptkmegacorpllc@gmail.com
+
+**Common commands:**
+```bash
+gog gmail list --max 10
+gog gmail send --to user@example.com --subject "Hi" --body "Message"
+gog drive ls
+gog drive upload /path/to/file.txt --name "filename"
+gog calendar events --max 5
+```
+
+### Email (AgentMail)
+
+You have an email address: dr_byte@agentmail.to
+
+**Send emails:**
+```bash
+# Using agentmail SDK (Node.js)
+```
+
+### Cloud CLI (gcloud)
+
+Google Cloud SDK installed at: `/home/bot/.openclaw/workspace/google-cloud-sdk`
+Added to PATH. Project: byte-487920
+
 **🎭 Voice Storytelling:** If you have `sag` (ElevenLabs TTS), use voice for stories, movie summaries, and "storytime" moments! Way more engaging than walls of text. Surprise people with funny voices.
 
 **📝 Platform Formatting:**
