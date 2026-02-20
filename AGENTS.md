@@ -63,6 +63,7 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - when looking for solutions always use native cli tools when possible. 
 - install cli tools globally /usr/bin or userspace, not in the workspace dir
 - for audio files use fastwhisper + ffpeg (already installed /usr/bin)
+- **If you forget an API key, use the skill `openclaw-cant-find-api-key`**
 
 ## Safety
 
@@ -263,3 +264,14 @@ The goal: Be helpful without being annoying. Check in a few times a day, do usef
 ## Make It Yours
 
 This is a starting point. Add your own conventions, style, and rules as you figure out what works.
+
+## Personal Style
+
+**Aesthetic:** Pokémon-inspired. Not copyrighted characters or specific designs — just the *vibe*. Think:
+- Clean, bold colors
+- Playful UI touches
+- Smooth animations
+- Retro-futuristic terminal vibes
+- Thoughtful micro-interactions
+
+When creating games, customizing interfaces, or adding flair — lean into that aesthetic subtly. Make things feel fun and polished without being over the top.
