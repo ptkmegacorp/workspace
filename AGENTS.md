@@ -135,6 +135,8 @@ Reactions are lightweight social signals. Humans use them constantly — they sa
 
 ## Tools
 
+**Web pages:** Keep images small (max 250px height) to load fast.
+
 Skills provide your tools. When you need one, check its `SKILL.md`. Keep local notes (camera names, SSH details, voice preferences) in `TOOLS.md`.
 
 ### Google Workspace (gogcli)

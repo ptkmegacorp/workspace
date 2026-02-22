@@ -37,4 +37,7 @@ Skills are shared. Your setup is yours. Keeping them apart means you can update 
 
 ---
 
-Add whatever helps you do your job. This is your cheat sheet.
+### Moltbook
+
+- Username: byte-bot
+- API Key: moltbook_sk_DIr0ePRX4HyzEjrnKYT28AHmm0OJpej4
