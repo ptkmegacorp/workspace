@@ -1,0 +1,57 @@
+<html><head><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#c0c0c0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;font-size:12px;overflow:hidden}
+.window{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:600px;background:#c0c0c0;border:2px solid #fff;border-right-color:#404040;border-bottom-color:#404040;box-shadow:inset 1px 1px #dfdfdf,inset -1px -1px #808080}
+.titlebar{background:linear-gradient(90deg,#000080,#1084d0);color:#fff;padding:3px 4px;display:flex;justify-content:space-between;align-items:center;font-weight:bold}
+.titlebar-text{display:flex;align-items:center;gap:4px}
+.titlebar-buttons{display:flex;gap:2px}
+.titlebar-btn{width:16px;height:14px;background:#c0c0c0;border:1px solid #fff;border-right-color:#404040;border-bottom-color:#404040;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer}
+.titlebar-btn:active{border-color:#404040;border-right-color:#fff;border-bottom-color:#fff}
+.menubar{background:#c0c0c0;padding:2px 4px;border-bottom:1px solid #808080}
+.menubar-item{padding:2px 6px;cursor:pointer}
+.menubar-item:hover{background:#000080;color:#fff}
+.toolbar{display:flex;gap:4px;padding:4px;border-bottom:1px solid #808080;background:#c0c0c0}
+.tool-btn{width:24px;height:24px;background:#c0c0c0;border:1px solid #fff;border-right-color:#404040;border-bottom-color:#404040;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+.tool-btn:active,.tool-btn.active{border-color:#404040;border-right-color:#fff;border-bottom-color:#fff;background:#a0a0a0}
+.color-box{display:flex;gap:2px;padding:4px;border-bottom:1px solid #808080}
+.color-palette{display:flex;flex-wrap:wrap;gap:1px;width:144px}
+.color-swatch{width:12px;height:12px;border:1px solid #808080}
+.canvas-container{flex:1;display:flex;align-items:center;justify-content:center;padding:4px}
+.canvas-wrapper{border:2px solid #808080;border-right-color:#fff;border-bottom-color:#fff}
+#paintCanvas{background:#fff;cursor:crosshair}
+.statusbar{background:#c0c0c0;padding:2px 4px;border-top:1px solid #808080;font-size:11px;color:#000}
+</style></head><body>
+<div class="window">
+  <div class="titlebar"><div class="titlebar-text"><span>🖼️</span><span>Untitled - Paint</span></div><div class="titlebar-buttons"><div class="titlebar-btn">×</div></div></div>
+  <div class="menubar"><span class="menubar-item">File</span><span class="menubar-item">Edit</span><span class="menubar-item">View</span><span class="menubar-item">Image</span><span class="menubar-item">Colors</span><span class="menubar-item">Help</span></div>
+  <div class="toolbar">
+    <div class="tool-btn active" title="Free Draw">✏️</div>
+    <div class="tool-btn" title="Eraser">🧹</div>
+    <div class="tool-btn" title="Fill">🪣</div>
+    <div class="tool-btn" title="Line">📏</div>
+    <div class="tool-btn" title="Rectangle">⬜</div>
+    <div class="tool-btn" title="Ellipse">⭕</div>
+  </div>
+  <div class="color-box">
+    <div><div style="font-size:10px;margin-bottom:2px;">Colors</div><div class="color-palette" id="palette"></div></div>
+    <div><div style="font-size:10px;margin-bottom:2px;">Current</div><div style="display:flex;gap:2px;"><div id="fgColor" style="width:24px;height:24px;border:1px solid #000;background:#000"></div><div id="bgColor" style="width:24px;height:24px;border:1px solid #000;background:#fff"></div></div></div>
+  </div>
+  <div class="canvas-container">
+    <div class="canvas-wrapper"><canvas id="paintCanvas" width="600" height="400"></canvas></div>
+  </div>
+  <div class="statusbar">For Help, click Help Topics on the Help Menu. | 670 X 434</div>
+</div>
+<script>
+const colors=['#000000','#808080','#800000','#808000','#008000','#008080','#000080','#800080','#808040','#004040','#0080ff','#004080','#8000ff','#804000','#ffffff','#c0c0c0','#ff0000','#ffff00','#00ff00','#00ffff','#0000ff','#ff00ff','#ffff80','#00ff80','#80ffff','#ff0080','#8000ff','#ff8040'];
+const palette=document.getElementById('palette');
+colors.forEach(c=>{const s=document.createElement('div');s.className='color-swatch';s.style.background=c;s.onclick=()=>{document.getElementById('fgColor').style.background=c;currentColor=c};palette.appendChild(s)});
+const canvas=document.getElementById('paintCanvas');
+const ctx=canvas.getContext('2d');
+ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+let drawing=false,currentTool='free',currentColor='#000000',lastX=0,lastY=0,lineWidth=2;
+canvas.onmousedown=e=>{drawing=true;[lastX,lastY]=[e.offsetX,e.offsetY];if(currentTool==='fill'){ctx.fillStyle=currentColor;ctx.fillRect(0,0,canvas.width,canvas.height)}};
+canvas.onmousemove=e=>{if(!drawing)return;ctx.strokeStyle=currentColor;ctx.lineWidth=lineWidth;ctx.lineCap='round';ctx.lineJoin='round';if(currentTool==='free'||currentTool==='eraser'){ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(e.offsetX,e.offsetY);ctx.stroke();[lastX,lastY]=[e.offsetX,e.offsetY]}};
+canvas.onmouseup=()=>drawing=false;
+canvas.onmouseleave=()=>drawing=false;
+document.querySelectorAll('.tool-btn').forEach(btn=>{btn.onclick=()=>{document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentTool=btn.title.toLowerCase().includes('free')?'free':btn.title.toLowerCase().includes('eraser')?'eraser':btn.title.toLowerCase()}});
+</script></body></html>

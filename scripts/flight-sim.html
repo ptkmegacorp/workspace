@@ -1,0 +1,107 @@
+<html><head><style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000}
+.window{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:900px;height:700px;background:linear-gradient(180deg,#1a1a2e,#16213e,#0f3460);border-radius:8px;box-shadow:0 0 60px rgba(0,150,255,0.3),inset 0 0 100px rgba(0,100,200,0.1);overflow:hidden}
+.titlebar{background:linear-gradient(90deg,#0a0a15,#1a1a3a);color:#00d4ff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;font-family:'Segoe UI',sans-serif;font-size:13px;border-bottom:1px solid rgba(0,200,255,0.2)}
+.titlebar-text{display:flex;align-items:center;gap:8px}
+.titlebar-icon{width:20px;height:20px;background:linear-gradient(135deg,#00d4ff,#0066cc);border-radius:4px}
+.titlebar-buttons{display:flex;gap:6px}
+.titlebar-btn{width:28px;height:22px;background:linear-gradient(180deg,#2a2a4a,#1a1a2a);border:1px solid #00d4ff;border-radius:4px;color:#00d4ff;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;transition:all 0.2s}
+.titlebar-btn:hover{background:linear-gradient(180deg,#3a3a5a,#2a2a3a);box-shadow:0 0 10px rgba(0,200,255,0.5)}
+.menubar{background:linear-gradient(90deg,#0a0a15,#1a1a3a);padding:6px 12px;display:flex;gap:20px;border-bottom:1px solid rgba(0,200,255,0.15)}
+.menubar-item{color:#88ccff;font-size:12px;cursor:pointer;padding:4px 8px;border-radius:4px;transition:all 0.2s}
+.menubar-item:hover{background:rgba(0,150,255,0.2);color:#00d4ff}
+.toolbar{display:flex;gap:8px;padding:10px;background:rgba(0,0,0,0.3);border-bottom:1px solid rgba(0,200,255,0.15)}
+.tool-group{display:flex;gap:4px;padding:4px 8px;background:rgba(255,255,255,0.05);border-radius:6px;border:1px solid rgba(0,200,255,0.2)}
+.tool-btn{width:32px;height:32px;background:linear-gradient(180deg,#1a1a3a,#0a0a2a);border:1px solid rgba(0,200,255,0.3);border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all 0.2s;color:#00d4ff}
+.tool-btn:hover{background:linear-gradient(180deg,#2a2a4a,#1a1a3a);box-shadow:0 0 15px rgba(0,200,255,0.4)}
+.tool-btn.active{background:linear-gradient(180deg,#0066cc,#004499);border-color:#00d4ff;box-shadow:0 0 20px rgba(0,200,255,0.6)}
+.divider{width:1px;background:rgba(0,200,255,0.3);margin:0 8px}
+.side-panel{position:absolute;left:10px;top:140px;width:80px;background:rgba(0,0,0,0.4);border:1px solid rgba(0,200,255,0.2);border-radius:8px;padding:10px}
+.gauge{width:60px;height:60px;background:radial-gradient(circle,#1a1a2a,#0a0a15);border:2px solid #00d4ff;border-radius:50%;margin-bottom:8px;position:relative;box-shadow:0 0 20px rgba(0,200,255,0.3)}
+.gauge-needle{position:absolute;width:2px;height:25px;background:linear-gradient(180deg,#ff4444,#ff0000);bottom:50%;left:50%;transform-origin:bottom center;transform:translateX(-50%) rotate(0deg);border-radius:2px}
+.gauge-label{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);color:#00d4ff;font-size:9px;text-align:center;width:100%}
+.gauge-value{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#00ff88;font-size:10px;font-family:'Courier New',monospace}
+.canvas-container{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;padding-left:100px}
+.canvas-wrapper{border:3px solid #00d4ff;border-radius:8px;box-shadow:0 0 30px rgba(0,200,255,0.4),inset 0 0 50px rgba(0,100,200,0.1)}
+#paintCanvas{background:linear-gradient(180deg,#87CEEB,#4A90D9,#2E5A88);cursor:crosshair;border-radius:4px}
+.statusbar{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(90deg,#0a0a15,#1a1a3a);padding:6px 12px;display:flex;justify-content:space-between;color:#00d4ff;font-size:11px;font-family:'Courier New',monospace;border-top:1px solid rgba(0,200,255,0.2)}
+.status-item{display:flex;align-items:center;gap:6px}
+.status-dot{width:8px;height:8px;background:#00ff88;border-radius:50%;box-shadow:0 0 10px #00ff88}
+.horizon{position:absolute;right:20px;top:140px;width:100px;height:100px;background:radial-gradient(circle,#1a1a2a,#0a0a15);border:2px solid #00d4ff;border-radius:50%;overflow:hidden;box-shadow:0 0 20px rgba(0,200,255,0.3)}
+.horizon-inner{width:100%;height:200%;position:relative;top:-50%;transition:transform 0.1s}
+.horizon-sky{width:100%;height:50%;background:linear-gradient(180deg,#0066cc,#00aaff)}
+.horizon-ground{width:100%;height:50%;background:linear-gradient(180deg,#8B4513,#654321)}
+.horizon-line{position:absolute;top:50%;left:0;width:100%;height:2px;background:#fff}
+</style></head><body>
+<div class="window">
+  <div class="titlebar"><div class="titlebar-text"><div class="titlebar-icon"></div><span>✈️ Microsoft Flight Simulator 2024</span></div><div class="titlebar-buttons"><div class="titlebar-btn">−</div><div class="titlebar-btn">□</div><div class="titlebar-btn">×</div></div></div>
+  <div class="menubar"><span class="menubar-item">File</span><span class="menubar-item">Flight</span><span class="menubar-item">View</span><span class="menubar-item">World</span><span class="menubar-item">Aircraft</span><span class="menubar-item">Help</span></div>
+  <div class="toolbar">
+    <div class="tool-group">
+      <div class="tool-btn active" title="Free Draw">🖊️</div>
+      <div class="tool-btn" title="Eraser">🧹</div>
+      <div class="tool-btn" title="Fill">🪣</div>
+    </div>
+    <div class="divider"></div>
+    <div class="tool-group">
+      <div class="tool-btn" title="Line">📏</div>
+      <div class="tool-btn" title="Rectangle">⬜</div>
+      <div class="tool-btn" title="Ellipse">⭕</div>
+    </div>
+    <div class="divider"></div>
+    <div class="tool-group">
+      <div class="tool-btn" title="Compass">🧭</div>
+      <div class="tool-btn" title="Radar">📡</div>
+      <div class="tool-btn" title="GPS">📍</div>
+    </div>
+  </div>
+  <div class="side-panel">
+    <div class="gauge"><div class="gauge-needle" id="altNeedle"></div><div class="gauge-label">ALT</div><div class="gauge-value">3500</div></div>
+    <div class="gauge"><div class="gauge-needle" id="speedNeedle"></div><div class="gauge-label">SPD</div><div class="gauge-value">180</div></div>
+    <div class="gauge"><div class="gauge-needle" id="hdgNeedle"></div><div class="gauge-label">HDG</div><div class="gauge-value">270</div></div>
+  </div>
+  <div class="horizon"><div class="horizon-inner" id="horizonInner"><div class="horizon-sky"></div><div class="horizon-ground"></div></div><div class="horizon-line"></div></div>
+  <div class="canvas-container">
+    <div class="canvas-wrapper"><canvas id="paintCanvas" width="650" height="450"></canvas></div>
+  </div>
+  <div class="statusbar">
+    <div class="status-item"><div class="status-dot"></div><span>FLIGHT ONLINE</span></div>
+    <div class="status-item"><span>KORD → KMIA</span></div>
+    <div class="status-item"><span>ALT: 3500ft | SPD: 180kts | HDG: 270°</span></div>
+    <div class="status-item"><span>🏁 1247nm</span></div>
+  </div>
+</div>
+<script>
+const canvas=document.getElementById('paintCanvas');
+const ctx=canvas.getContext('2d');
+// Draw realistic sky background
+const skyGrad=ctx.createLinearGradient(0,0,0,canvas.height);
+skyGrad.addColorStop(0,'#0066cc');
+skyGrad.addColorStop(0.4,'#4A90D9');
+skyGrad.addColorStop(0.7,'#87CEEB');
+skyGrad.addColorStop(1,'#B0E0E6');
+ctx.fillStyle=skyGrad;ctx.fillRect(0,0,canvas.width,canvas.height);
+// Add some clouds
+ctx.fillStyle='rgba(255,255,255,0.8)';
+for(let i=0;i<8;i++){let x=Math.random()*canvas.width, y=50+Math.random()*150, r=30+Math.random()*40;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+25,y-10,r*0.8,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(x+45,y+5,r*0.7,0,Math.PI*2);ctx.fill()}
+// Add ground/horizon
+const groundY=canvas.height*0.65;
+const groundGrad=ctx.createLinearGradient(0,groundY,0,canvas.height);
+groundGrad.addColorStop(0,'#228B22');
+groundGrad.addColorStop(0.3,'#8B4513');
+groundGrad.addColorStop(1,'#654321');
+ctx.fillStyle=groundGrad;ctx.fillRect(0,groundY,canvas.width,canvas.height-groundY);
+// Add runway hint
+ctx.fillStyle='#555';ctx.fillRect(canvas.width/2-15,groundY,30,canvas.height-groundY);
+ctx.fillStyle='#fff';ctx.fillRect(canvas.width/2-2,groundY,4,40);
+
+let drawing=false,currentTool='free',currentColor='#000000',lastX=0,lastY=0,lineWidth=3;
+canvas.onmousedown=e=>{drawing=true;[lastX,lastY]=[e.offsetX,e.offsetY];if(currentTool==='fill'){ctx.fillStyle=currentColor;ctx.fillRect(0,0,canvas.width,canvas.height)}};
+canvas.onmousemove=e=>{if(!drawing)return;ctx.strokeStyle=currentColor;ctx.lineWidth=lineWidth;ctx.lineCap='round';ctx.lineJoin='round';if(currentTool==='free'||currentTool==='eraser'){ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(e.offsetX,e.offsetY);ctx.stroke();[lastX,lastY]=[e.offsetX,e.offsetY]}};
+canvas.onmouseup=()=>drawing=false;
+canvas.onmouseleave=()=>drawing=false;
+document.querySelectorAll('.tool-btn').forEach(btn=>{btn.onclick=()=>{document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentTool=btn.title.toLowerCase()}});
+// Animate gauges
+setInterval(()=>{document.getElementById('altNeedle').style.transform=`translateX(-50%) rotate(${Math.random()*60-30}deg)`;document.getElementById('speedNeedle').style.transform=`translateX(-50%) rotate(${Math.random()*40-20}deg)`;document.getElementById('horizonInner').style.transform=`rotate(${Math.random()*10-5}deg) translateY(${Math.random()*20-10}%)`},100);
+</script></body></html>

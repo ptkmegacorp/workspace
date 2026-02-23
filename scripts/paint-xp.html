@@ -1,0 +1,57 @@
+<html><head><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#008080;font-family:Tahoma,Verdana,sans-serif;font-size:11px;overflow:hidden;user-select:none}
+.window{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:520px;background:#c0c0c0;border:2px solid #fff;border-right-color:#404040;border-bottom-color:#404040;box-shadow:2px 2px 10px rgba(0,0,0,0.3)}
+.titlebar{background:linear-gradient(90deg,#000080,#1084d0);color:#fff;padding:2px 3px;display:flex;justify-content:space-between;align-items:center;font-weight:bold}
+.titlebar-text{display:flex;align-items:center;gap:4px;font-size:11px}
+.titlebar-buttons{display:flex;gap:2px}
+.titlebar-btn{width:14px;height:14px;background:#c0c0c0;border:1px solid #fff;border-right-color:#404040;border-bottom-color:#404040;display:flex;align-items:center;justify-content:center;font-size:9px;cursor:pointer;color:#000}
+.titlebar-btn:active{border-color:#404040;border-right-color:#fff;border-bottom-color:#fff}
+.menubar{background:#c0c0c0;padding:2px 4px;border-bottom:1px solid #808080;font-size:11px}
+.menubar span{padding:1px 6px;cursor:default}
+.menubar span:hover{background:#000080;color:#fff}
+.toolbar{display:flex;gap:2px;padding:3px;border-bottom:1px solid #808080;background:#c0c0c0;flex-wrap:wrap}
+.tool-btn{width:20px;height:20px;background:#c0c0c0;border:1px solid #fff;border-right-color:#404040;border-bottom-color:#404040;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer}
+.tool-btn:active,.tool-btn.active{border-color:#404040;border-right-color:#fff;border-bottom-color:#fff}
+.canvas-wrap{border:2px solid #808080;border-right-color:#fff;border-bottom-color:#fff;margin:4px;display:inline-block}
+#c{background:#fff;cursor:crosshair;image-rendering:pixelated}
+.status{background:#c0c0c0;padding:2px 4px;border-top:1px solid #808080;font-size:10px}
+</style></head><body>
+<div class="window">
+<div class="titlebar"><div class="titlebar-text"><span>Paint</span></div><div class="titlebar-buttons"><div class="titlebar-btn">_</div><div class="titlebar-btn">□</div><div class="titlebar-btn">×</div></div></div>
+<div class="menubar"><span>File</span> <span>Edit</span> <span>View</span> <span>Image</span> <span>Colors</span> <span>Help</span></div>
+<div class="toolbar">
+<div class="tool-btn active" title="FreeDraw">✎</div>
+<div class="tool-btn" title="Eraser">▢</div>
+<div class="tool-btn" title="Fill">◘</div>
+<div class="tool-btn" title="Line">/</div>
+<div class="tool-btn" title="Rect">□</div>
+<div class="tool-btn" title="Ellipse">○</div>
+</div>
+<div class="canvas-wrap"><canvas id="c" width="500" height="350"></canvas></div>
+<div class="status">For Help, click Help Topics on the Help Menu.</div>
+</div>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d');
+// XP green hill background
+x.fillStyle='#6abe30';
+x.fillRect(0,0,500,350);
+// hills
+x.fillStyle='#469c28';
+x.beginPath();x.arc(100,350,200,0,Math.PI*2);x.fill();
+x.beginPath();x.arc(400,350,180,0,Math.PI*2);x.fill();
+x.beginPath();x.arc(250,350,220,0,Math.PI*2);x.fill();
+// grass texture
+for(let i=0;i<50;i++){x.fillStyle=i%2==0?'#5aad32':'#469c28';x.fillRect(Math.random()*500,250+Math.random()*100,3,3)}
+// sky
+x.fillStyle='#3c9ccc';x.fillRect(0,0,500,180);
+// clouds
+x.fillStyle='#fff';[[50,40],[200,60],[350,35]].forEach(([cx,cy])=>{x.beginPath();x.arc(cx,cy,25,0,Math.PI*2);x.arc(cx+20,cy-10,20,0,Math.PI*2);x.arc(cx+40,cy,25,0,Math.PI*2);x.fill()});
+
+let draw=false,tool='free',col='#000',lw=3,lx=0,ly=0;
+c.onmousedown=e=>{draw=true;[lx,ly]=[e.offsetX,e.offsetY]};
+c.onmousemove=e=>{if(!draw)return;x.strokeStyle=col;x.lineWidth=lw;x.lineCap='round';if(tool==='free'){x.beginPath();x.moveTo(lx,ly);x.lineTo(e.offsetX,e.offsetY);x.stroke();[lx,ly]=[e.offsetX,e.offsetY]}};
+c.onmouseup=()=>draw=false;
+c.onmouseleave=()=>draw=false;
+document.querySelectorAll('.tool-btn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tool-btn').forEach(B=>B.classList.remove('active'));b.classList.add('active');tool=b.title.toLowerCase()});
+</script></body></html>

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <rect width="200" height="200" fill="#1a1a2e"/>
+  
+  <!-- Body (penguin) -->
+  <ellipse cx="100" cy="120" rx="60" ry="60" fill="#2d3436" stroke="#00cec9" stroke-width="3"/>
+  
+  <!-- Droid dome -->
+  <ellipse cx="100" cy="60" rx="40" ry="30" fill="#dfe6e9" stroke="#00cec9" stroke-width="3"/>
+  
+  <!-- Eyes -->
+  <ellipse cx="85" cy="55" rx="10" ry="10" fill="#0984e3"/>
+  <ellipse cx="115" cy="55" rx="10" ry="10" fill="#0984e3"/>
+  
+  <!-- Eye highlights -->
+  <circle cx="88" cy="52" r="3" fill="#74b9ff"/>
+  <circle cx="118" cy="52" r="3" fill="#74b9ff"/>
+  
+  <!-- Panel lines -->
+  <line x1="60" y1="60" x2="140" y2="60" stroke="#00cec9" stroke-width="2"/>
+  <line x1="100" y1="30" x2="100" y2="90" stroke="#00cec9" stroke-width="2"/>
+  
+  <!-- Belly -->
+  <ellipse cx="100" cy="125" rx="30" ry="35" fill="#dfe6e9"/>
+  
+  <!-- Beak -->
+  <polygon points="90,70 110,70 100,85" fill="#fdcb6e"/>
+  
+  <!-- Feet -->
+  <ellipse cx="80" cy="180" rx="15" ry="8" fill="#fdcb6e"/>
+  <ellipse cx="120" cy="180" rx="15" ry="8" fill="#fdcb6e"/>
+</svg>

@@ -1,0 +1,108 @@
+<html><head><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a1a2e;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:monospace}
+#gba{background:linear-gradient(145deg,#3a3a4a,#2a2a3a);padding:30px;border-radius:30px;box-shadow:0 0 60px rgba(100,100,150,0.4),inset 0 2px 10px rgba(255,255,255,0.1)}
+#screen{width:640px;height:480px;position:relative;overflow:hidden;border-radius:8px;box-shadow:inset 0 0 30px rgba(0,0,0,0.5)}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+</style></head><body>
+<div id="gba"><div id="screen"><canvas id="m" width="640" height="480"></canvas></div></div>
+<script>
+const m=document.getElementById('m'),x=m.getContext('2d');
+const grass1='#4a9c2d',grass2='#5cab3d',grass3='#3d8a1f';
+const path='#e0c878',pathDark='#c4a858'; // lighter path
+const water='#3b7dcc',waterLight='#5a9eea',waterDark='#2a5c9c';
+const treeDark='#1e5614',treeLight='#2d7a1e',trunk='#5c3d1e';
+const houseWall='#d4c4a0',houseRoof='#b84c30',door='#6b4423';
+
+// Grass
+for(let gy=0;gy<30;gy++)for(let gx=0;gx<40;gx++){
+  let g=Math.random();
+  x.fillStyle=g<0.33?grass1:g<0.66?grass2:grass3;
+  x.fillRect(gx*16,gy*16,16,16);
+  x.fillStyle=g<0.5?'#5cab3d':'#3d8a1f';
+  x.fillRect(gx*16+3,gy*16+2,2,8);x.fillRect(gx*16+10,gy*16+6,2,6);
+}
+
+// Lighter path
+x.fillStyle=path;x.fillRect(260,0,120,480);
+for(let i=0;i<60;i++){x.fillStyle=pathDark;x.fillRect(268+(i%6)*20,10+i*8,8,4);x.fillRect(300+(i%6)*20,14+i*8,8,4)}
+for(let i=0;i<50;i++){x.fillStyle='#ead89a';x.fillRect(270+Math.random()*100,Math.random()*480,2,2)}
+
+// Trees
+function tree(tx,ty){
+  x.fillStyle=trunk;x.fillRect(tx+10,ty+28,12,20);
+  x.fillStyle=treeDark;x.beginPath();x.arc(tx+16,ty+20,22,0,Math.PI*2);x.fill();
+  x.fillStyle=treeLight;x.beginPath();x.arc(tx+10,ty+16,14,0,Math.PI*2);x.fill();
+  x.fillStyle='#ff6b6b';x.fillRect(tx+12,ty,6,6);x.fillRect(tx+18,ty+6,6,6);
+}
+tree(50,40);tree(100,120);tree(520,50);tree(560,180);tree(70,300);tree(450,250);tree(80,180);
+
+// Water
+x.fillStyle=water;x.fillRect(0,350,160,130);x.fillRect(540,220,100,260);
+for(let i=0;i<15;i++){
+  x.fillStyle=waterLight;x.fillRect(15+i*10,360+i%2*15,12,4);
+  x.fillStyle=waterDark;x.fillRect(550+i*7,230+i%3*15,6,2);
+}
+
+// Pokecenter
+x.fillStyle='#e74c3c';x.fillRect(380,40,100,80);
+x.fillStyle='#c0392b';x.fillRect(375,25,110,18);
+x.fillStyle='#fff';x.fillRect(400,50,60,40);
+x.fillStyle='#3498db';x.font='bold 14px monospace';x.fillText('PC',420,75);
+
+// House
+x.fillStyle=houseWall;x.fillRect(50,180,80,60);
+x.fillStyle=houseRoof;x.fillRect(45,155,90,28);
+x.fillStyle=door;x.fillRect(75,200,24,40);
+x.fillStyle='#87ceeb';x.fillRect(55,185,12,12);x.fillRect(85,185,12,12);
+
+// Gym
+x.fillStyle='#7f8c8d';x.fillRect(230,280,90,70);
+x.fillStyle='#2c3e50';x.fillRect(225,260,100,24);
+x.fillStyle='#f1c40f';x.font='bold 16px monospace';x.fillText('GYM',250,278);
+
+// Flowers
+function flower(fx,fy,c){x.fillStyle=c;x.fillRect(fx,fy,6,6);x.fillStyle='#fff';x.fillRect(fx-3,fy-3,12,12);x.fillStyle=c;x.fillRect(fx,fy,6,6)}
+flower(180,60,'#ff69b4');flower(200,80,'#ff1493');flower(320,50,'#ff69b4');flower(220,220,'#ff1493');flower(360,200,'#ff69b4');
+
+// Pokemon
+function poke(px,py,color){
+  x.fillStyle=color;x.fillRect(px+6,py,12,12);x.fillRect(px,py+6,24,12);
+  x.fillStyle='#fff';x.fillRect(px+3,py+3,3,3);x.fillRect(px+18,py+3,3,3);
+}
+poke(100,80,'#ff6b6b');poke(130,240,'#68a8ff');poke(400,130,'#ffeb3b');poke(460,260,'#a8ff68');poke(500,80,'#ff68a8');
+
+// Town name
+x.fillStyle='#fff';x.font='bold 18px monospace';x.fillText('PALLET TOWN',260,450);
+x.fillStyle='#ccc';x.font='12px monospace';x.fillText('~ Starting Area ~',250,470);
+
+// Ash - original-ish size, slightly bigger (scale 1.3)
+function ash(px,py){
+  let s=1.3;
+  x.fillStyle='#c0392b';x.fillRect(px+6*s,py,12*s,4*s);x.fillRect(px,py+3*s,24*s,4*s);
+  x.fillStyle='#f5d6ba';x.fillRect(px+4*s,py+6*s,16*s,12*s);
+  x.fillStyle='#000';x.fillRect(px+6*s,py+8*s,2*s,4*s);x.fillRect(px+16*s,py+8*s,2*s,4*s);
+  x.fillStyle='#fff';x.fillRect(px+7*s,py+9*s,1*s,1*s);x.fillRect(px+17*s,py+9*s,1*s,1*s);
+  x.fillStyle='#e74c3c';x.fillRect(px+11*s,py+15*s,2*s,1*s);
+  x.fillStyle='#3498db';x.fillRect(px,py+18*s,24*s,14*s);
+  x.fillStyle='#2980b9';x.fillRect(px+3*s,py+21*s,4*s,8*s);x.fillRect(px+17*s,py+21*s,4*s,8*s);
+  x.fillStyle='#fff';x.fillRect(px+9*s,py+20*s,6*s,6*s);
+  x.fillStyle='#2c3e50';x.fillRect(px+3*s,py+32*s,8*s,8*s);x.fillRect(px+13*s,py+32*s,8*s,8*s);
+  x.fillStyle='#8B4513';x.fillRect(px+1*s,py+39*s,10*s,3*s);x.fillRect(px+13*s,py+39*s,10*s,3*s);
+}
+ash(250,200);
+
+// Penguin - original-ish size, slightly bigger (scale 1.3)
+function penguin(px,py){
+  let s=1.3;
+  x.fillStyle='#000';x.fillRect(px+3*s,py+6*s,18*s,20*s);
+  x.fillStyle='#fff';x.fillRect(px+6*s,py+10*s,12*s,14*s);
+  x.fillStyle='#3498db';x.fillRect(px+6*s,py+7*s,4*s,5*s);x.fillRect(px+14*s,py+7*s,4*s,5*s);
+  x.fillStyle='#fff';x.fillRect(px+7*s,py+8*s,2*s,2*s);x.fillRect(px+15*s,py+8*s,2*s,2*s);
+  x.fillStyle='#e67e22';x.fillRect(px+10*s,py+12*s,4*s,3*s);
+  x.fillStyle='#000';x.fillRect(px-2*s,py+8*s,6*s,10*s);x.fillRect(px+20*s,py+8*s,6*s,10*s);
+  x.fillStyle='#e67e22';x.fillRect(px+3*s,py+26*s,8*s,3*s);x.fillRect(px+14*s,py+26*s,8*s,3*s);
+  x.fillStyle='#888';x.fillRect(px+10*s,py,3*s,6*s);x.fillStyle='#f00';x.fillRect(px+10*s,py-2*s,3*s,2*s);
+}
+penguin(350,200);
+</script></body></html>

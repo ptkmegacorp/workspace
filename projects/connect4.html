@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Connect 4</title>
+    <style>
+        body {
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+        }
+        h1 { margin-bottom: 10px; text-shadow: 0 0 10px #fff; }
+        #status { font-size: 24px; margin-bottom: 20px; height: 30px; }
+        #game { 
+            background: #0066cc; 
+            padding: 15px; 
+            border-radius: 10px;
+            box-shadow: 0 0 30px #0066cc;
+        }
+        .row { display: flex; }
+        .cell {
+            width: 60px;
+            height: 60px;
+            background: #1a1a2e;
+            border-radius: 50%;
+            margin: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .cell:hover { background: #333; }
+        .red { background: #ff4444; box-shadow: 0 0 10px #ff4444; }
+        .yellow { background: #ffdd00; box-shadow: 0 0 10px #ffdd00; }
+        #restart {
+            margin-top: 20px;
+            padding: 10px 30px;
+            font-size: 18px;
+            background: #0f0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        #restart:hover { background: #0c0; }
+    </style>
+</head>
+<body>
+    <h1>🔴🟡 CONNECT 4 🟡🔴</h1>
+    <div id="status">Red's Turn</div>
+    <div id="game"></div>
+    <button id="restart" onclick="resetGame()">New Game</button>
+
+    <script>
+        const rows = 6, cols = 7;
+        let board = [];
+        let currentPlayer = 'red';
+        let gameOver = false;
+        
+        function initBoard() {
+            board = Array(rows).fill(null).map(() => Array(cols).fill(null));
+        }
+        
+        function createGame() {
+            const game = document.getElementById('game');
+            game.innerHTML = '';
+            
+            for (let r = 0; r < rows; r++) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                for (let c = 0; c < cols; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.col = c;
+                    cell.onclick = () => dropPiece(c);
+                    row.appendChild(cell);
+                }
+                game.appendChild(row);
+            }
+        }
+        
+        function dropPiece(col) {
+            if (gameOver) return;
+            
+            for (let r = rows - 1; r >= 0; r--) {
+                if (!board[r][col]) {
+                    board[r][col] = currentPlayer;
+                    updateBoard();
+                    if (checkWin(r, col)) {
+                        document.getElementById('status').textContent = 
+                            (currentPlayer === 'red' ? '🔴' : '🟡') + ' WINS! 🎉';
+                        gameOver = true;
+                    } else if (checkDraw()) {
+                        document.getElementById('status').textContent = 'DRAW! 🤝';
+                        gameOver = true;
+                    } else {
+                        currentPlayer = currentPlayer === 'red' ? 'yellow' : 'red';
+                        document.getElementById('status').textContent = 
+                            (currentPlayer === 'red' ? '🔴' : '🟡') + "'s Turn";
+                    }
+                    return;
+                }
+            }
+        }
+        
+        function updateBoard() {
+            const cells = document.querySelectorAll('.cell');
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cell = cells[r * cols + c];
+                    cell.className = 'cell' + (board[r][c] ? ' ' + board[r][c] : '');
+                }
+            }
+        }
+        
+        function checkWin(row, col) {
+            const player = board[row][col];
+            const directions = [
+                [[0,1], [0,-1]],   // horizontal
+                [[1,0], [-1,0]],   // vertical
+                [[1,1], [-1,-1]],  // diagonal \
+                [[1,-1], [-1,1]]   // diagonal /
+            ];
+            
+            for (let dir of directions) {
+                let count = 1;
+                for (let [dr, dc] of dir) {
+                    let r = row + dr, c = col + dc;
+                    while (r >= 0 && r < rows && c >= 0 && c < cols && board[r][c] === player) {
+                        count++;
+                        r += dr;
+                        c += dc;
+                    }
+                }
+                if (count >= 4) return true;
+            }
+            return false;
+        }
+        
+        function checkDraw() {
+            return board[0].every(c => c !== null);
+        }
+        
+        function resetGame() {
+            initBoard();
+            currentPlayer = 'red';
+            gameOver = false;
+            document.getElementById('status').textContent = "Red's Turn";
+            createGame();
+        }
+        
+        initBoard();
+        createGame();
+    </script>
+</body>
+</html>

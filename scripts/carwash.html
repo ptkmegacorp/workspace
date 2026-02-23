@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sparkle Auto Wash - Premium Car Care</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;line-height:1.6;color:#333;background:#f5f5f5}
+        header{background:linear-gradient(135deg,#1e3c72,#2a5298);color:#fff;padding:20px 0}
+        .container{max-width:1100px;margin:0 auto;padding:0 20px}
+        nav{display:flex;justify-content:space-between;align-items:center}
+        .logo{font-size:28px;font-weight:bold;display:flex;align-items:center;gap:10px}
+        .nav-links{display:flex;gap:30px;list-style:none}
+        .nav-links a{color:#fff;text-decoration:none;font-size:15px;transition:opacity 0.3s}
+        .nav-links a:hover{opacity:0.8}
+        .hero{background:linear-gradient(rgba(30,60,114,0.7),rgba(30,60,114,0.7)),url('https://images.unsplash.com/photo-1601362840469-51e4d8d58785?w=1200');background-size:cover;background-position:center;color:#fff;padding:100px 20px;text-align:center}
+        .hero h1{font-size:48px;margin-bottom:20px}
+        .hero p{font-size:20px;margin-bottom:30px;opacity:0.9}
+        .btn{display:inline-block;background:#f39c12;color:#fff;padding:12px 35px;text-decoration:none;border-radius:5px;font-size:16px;transition:background 0.3s}
+        .btn:hover{background:#e67e22}
+        .services{background:#fff;padding:60px 20px}
+        .services h2{text-align:center;font-size:32px;margin-bottom:40px;color:#1e3c72}
+        .services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:30px;max-width:1100px;margin:0 auto}
+        .service-card{background:#f9f9f9;border-radius:10px;overflow:hidden;box-shadow:0 2px10px rgba(0,0,0,0.1)}
+        .service-card img{width:100%;height:200px;object-fit:cover}
+        .service-card h3{padding:20px 20px 10px;font-size:20px;color:#1e3c72}
+        .service-card p{padding:0 20px 20px;color:#666}
+        .about{background:#f5f5f5;padding:60px 20px;text-align:center}
+        .about h2{font-size:32px;margin-bottom:20px;color:#1e3c72}
+        .about p{max-width:700px;margin:0 auto;color:#666}
+        footer{background:#1e3c72;color:#fff;padding:30px 20px;text-align:center}
+        footer p{opacity:0.8}
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">🚗 Sparkle Auto Wash</div>
+                <ul class="nav-links">
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">Services</a></li>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <section class="hero">
+        <div class="container">
+            <h1>Your Car Deserves the Best</h1>
+            <p>Professional automatic car wash services that leave your vehicle sparkling clean</p>
+            <a href="#" class="btn">Get Started</a>
+        </div>
+    </section>
+    
+    <section class="services">
+        <div class="container">
+            <h2>Our Services</h2>
+            <div class="services-grid">
+                <div class="service-card">
+                    <img src="https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=600" alt="Car Wash">
+                    <h3>Express Wash</h3>
+                    <p>Quick and efficient exterior wash in under 3 minutes</p>
+                </div>
+                <div class="service-card">
+                    <img src="https://images.unsplash.com/photo-1601362840469-51e4d8d58785?w=600" alt="Full Service">
+                    <h3>Deluxe Detail</h3>
+                    <p>Complete interior and exterior detailing package</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="about">
+        <div class="container">
+            <h2>About Us</h2>
+            <p>At Sparkle Auto Wash, we use state-of-the-art automatic washing technology and eco-friendly products to give your car the ultimate shine. Our trained professionals ensure every vehicle receives meticulous care.</p>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="container">
+            <p>© 2024 Sparkle Auto Wash. All rights reserved.</p>
+            <p>123 Wash Street, Auto City, AC 12345 | (555) 123-4567</p>
+        </div>
+    </footer>
+</body>
+</html>

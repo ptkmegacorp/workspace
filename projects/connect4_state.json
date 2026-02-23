@@ -1,0 +1,1 @@
+{"board": [[null, null, null, null, null, null, null], [null, null, null, null, null, null, null], [null, null, null, null, null, null, null], [null, null, null, null, null, null, null], [null, null, null, null, null, null, null], [null, null, null, "yellow", "red", null, null]], "current_player": "red", "game_over": false, "winner": null}
