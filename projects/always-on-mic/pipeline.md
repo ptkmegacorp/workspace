@@ -3,6 +3,7 @@
 ## Overview
 - Custom pipeline monitors a microphone stream to detect pauses, triggers OpenClaw commands, and delivers safe responses.
 - The Debian host runs the core CLI/skill stack, but the user may operate remotely via Tailscale SSH clients and needs the pipeline to accept remote-session commands and context.
+- The Ubuntu client toggles capture by double-pressing Control (start/stop) so each spoken message is bounded by paired presses before it posts to OpenClaw/Telegram.
 - Components coordinate in sequence: capture audio, transcribe it, detect a pause, enforce safety, notify OpenClaw, and deliver a response.
 
 ## Implementation Steps

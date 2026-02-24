@@ -4,7 +4,8 @@
 - **Purpose**: Run on your Ubuntu workstation (over Tailscale) to capture audio, detect pauses, and push events to the Debian host.
 - **Structure**:
   - `capture.sh` (Bash) or `capture.py` (Python) loops on the microphone input using `arecord`/`ffmpeg` or PyAudio.
-  - Use a VAD library (webrtcvad, sox `silence`, or ffmpeg `silencedetect`) to mark speech vs silence.
+  - A double tap on the Control key (or another hotkey) toggles the capture state: two quick presses start recording, another double press ends the session and pushes the buffered audio onward.
+  - Use a VAD library (webrtcvad, sox `silence`, or ffmpeg `silencedetect`) to mark speech vs silence during the active capture window.
   - Buffer short chunks (1–3 seconds) and only emit them once the buffer goes silent for >800 ms.
   - Transcription hook: send the chunk to the host service (HTTP POST of WAV/opus) or call local Whisper if latency allows.
 

@@ -12,4 +12,4 @@
 2. Layer in safety controls (rate limiting, mute flag, logging) before triggering `scripts/pause-trigger.sh`.
 3. Document the trigger workflow (skill or instructions) and wire the response delivery back to Telegram or the originating remote client.
 4. Test the end-to-end flow by posting fake pause payloads and ensuring OpenClaw replies appear in chat.
-5. Later: implement the Ubuntu-side capture + VAD app and optional TTS feedback paths.
+5. Later: implement the Ubuntu-side capture app that starts/stops recording via a double-tap of Control, wraps VAD/transcription, and optionally provides TTS feedback over Tailscale.
