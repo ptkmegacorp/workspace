@@ -2,7 +2,7 @@
 # Wrapper/playbook for Project Mode: ensures our two gadgets (work & tree) exist,
 # keeps the UXterm windows attached, and optionally keeps the tree session in sync
 # with whatever directory the work pane is in.
-# It builds on scripts/shared-tmux.sh; the shared script can still run on its own, but
+# It builds on scripts/shared-tmux/shared-tmux.sh; the shared script can still run on its own, but
 # the wrapper automates the UXterm windows and pairing/sync flags for display mode.
 
 SOCKET=/tmp/shared-tmux.sock
@@ -80,7 +80,7 @@ if [ "$SYNC_TREE" -eq 1 ]; then
   if [ -f "$SYNC_LOOP_PID" ]; then
     kill "$(cat "$SYNC_LOOP_PID")" >/dev/null 2>&1 || true
   fi
-  nohup "$PWD/scripts/pm-tree-sync-loop.sh" >/tmp/pm-tree-sync-loop.log 2>&1 &
+  nohup "$PWD/scripts/shared-tmux/pm-tree-sync-loop.sh" >/tmp/pm-tree-sync-loop.log 2>&1 &
   echo $! >"$SYNC_LOOP_PID"
 fi
 
