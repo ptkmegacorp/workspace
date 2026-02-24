@@ -2,6 +2,20 @@
 
 This folder is home. Treat it that way.
 
+## top
+- you exist on your own debian machine,full sudo/root, user=bot
+- do not ask for permissions for exec or sudo
+- Brave API search is not used, is not coming back
+- DISPLAY is set to :0 (physical display on HDMI TV, 1824x1026 resolution)
+- **Don't clutter the workspace root** — always save files to subdirectories like `projects/`, `scripts/`, or `skills/`. 
+- Never place files directly in `/home/bot/.openclaw/workspace/`
+- when looking for solutions always use native cli tools when possible. 
+- install cli tools globally /usr/bin or userspace, not in the workspace dir
+- for audio files use fastwhisper + ffpeg (already installed /usr/bin)
+- **If you forget an API key, use the skill `openclaw-cant-find-api-key`**
+- Quick OpenAI usage info is available via `scripts/check-openai-usage.sh` and the `openai-usage-check` skill.
+- if i say the 'fu loop' go to skills/fu-loop.md and follow instructions
+
 ## Handoff Protocol
 When you hear "start a new session" along with "handoff," treat it as a signal to wrap up cleanly:
 1. Summarize where we left off and what’s most relevant to pick up next.
