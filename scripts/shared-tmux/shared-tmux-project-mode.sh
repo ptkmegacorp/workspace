@@ -12,7 +12,8 @@ WORK_WINDOW=work
 TREE_WINDOW=tree
 UXTERM_WORK_TITLE="shared-work"
 UXTERM_TREE_TITLE="shared-tree"
-UXTERM_TREE_GEOMETRY="464x973+22+70"
+UXTERM_WORK_GEOMETRY="854x973+494+77"
+UXTERM_TREE_GEOMETRY="464x973+21+77"
 SYNC_TREE=0
 SYNC_LOOP_PID=/tmp/pm-tree-sync-loop.pid
 
@@ -63,17 +64,27 @@ ensure_uxterm() {
     # If it's already there, just reattach
     DISPLAY=:0 xdotool windowactivate "$existing"
   else
-    geom_arg=""
-    if [ -n "$geometry" ]; then
-      geom_arg="-geometry $geometry"
+    DISPLAY=:0 uxterm -title "$title" -e "tmux -S $SOCKET attach -t $target" >/tmp/uxterm-${title}.log 2>&1 &
+  fi
+  # always enforce geometry after ensuring window exists
+  if [ -n "$geometry" ]; then
+    geom_id="$(sleep 1 && DISPLAY=:0 xdotool search --name "$title" 2>/dev/null | head -n1)"
+    if [ -n "$geom_id" ]; then
+      size=${geometry%%+*}
+      width=${size%x*}
+      height=${size#*x}
+      offset=${geometry#*+}
+      pos_x=${offset%%+*}
+      pos_y=${offset#*+}
+      [ -n "$width" ] && [ -n "$height" ] && DISPLAY=:0 xdotool windowsize "$geom_id" "$width" "$height"
+      [ -n "$pos_x" ] && [ -n "$pos_y" ] && DISPLAY=:0 xdotool windowmove "$geom_id" "$pos_x" "$pos_y"
     fi
-    DISPLAY=:0 uxterm -title "$title" $geom_arg -e "tmux -S $SOCKET attach -t $target" >/tmp/uxterm-${title}.log 2>&1 &
   fi
 }
 
 ensure_session "$WORK_SESSION" "$WORK_WINDOW"
 ensure_session "$TREE_SESSION" "$TREE_WINDOW"
-ensure_uxterm "$UXTERM_WORK_TITLE" "$WORK_SESSION:$WORK_WINDOW"
+ensure_uxterm "$UXTERM_WORK_TITLE" "$WORK_SESSION:$WORK_WINDOW" "$UXTERM_WORK_GEOMETRY"
 ensure_uxterm "$UXTERM_TREE_TITLE" "$TREE_SESSION:$TREE_WINDOW" "$UXTERM_TREE_GEOMETRY"
 
 if [ "$SYNC_TREE" -eq 1 ]; then
