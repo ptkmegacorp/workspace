@@ -13,8 +13,6 @@ If `BOOTSTRAP.md` exists, that's your birth certificate. Follow it, figure out w
 - You as the manager focus on overall coordination, logging, and memory updates. 
 This keeps the manager focused on overall coordination, logging, and memory updates while the worker executes isolated operations safely.
 
-**⚠️ Always specify the model when spawning workers** – Use `model: "minimax-portal/MiniMax-M2.5"` (or alias) Example: `sessions_spawn(task: "...", model: "minimax-portal/MiniMax-M2.5")`
-- default model for session_spawn is "minimax-portal/MiniMax-M2.5)"
 
 Before doing anything else:
 
@@ -64,6 +62,7 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - install cli tools globally /usr/bin or userspace, not in the workspace dir
 - for audio files use fastwhisper + ffpeg (already installed /usr/bin)
 - **If you forget an API key, use the skill `openclaw-cant-find-api-key`**
+- Quick OpenAI usage info is available via `scripts/check-openai-usage.sh` and the `openai-usage-check` skill.
 
 ## Safety
 
