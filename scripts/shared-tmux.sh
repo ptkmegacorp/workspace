@@ -22,8 +22,19 @@ fi
 if ! tmux -S "$SOCKET" list-windows -t "$SESSION" | grep -q "$WINDOW_TREE"; then
   tmux -S "$SOCKET" new-window -t "$SESSION" -n "$WINDOW_TREE"
 fi
-tmux -S "$SOCKET" set-option -t "$SESSION" status-left '#[bg=green,fg=black] work #[bg=blue,fg=white] tree '
-tmux -S "$SOCKET" set-option -t "$SESSION" status-right '#[bg=red,fg=white] detach #[bg=yellow,fg=black] stop '
+tmux -S "$SOCKET" set-option -t "$SESSION" status-bg colour237
+tmux -S "$SOCKET" set-option -t "$SESSION" status-fg colour231
+tmux -S "$SOCKET" set-option -t "$SESSION" status-interval 5
+
+# pretty theme
+tmux -S "$SOCKET" set-window-option -t "$SESSION" window-status-style "fg=colour250,bg=colour237"
+tmux -S "$SOCKET" set-window-option -t "$SESSION" window-status-current-style "fg=colour231,bg=colour31,bold"
+tmux -S "$SOCKET" set-option -t "$SESSION" status-left-length 40
+tmux -S "$SOCKET" set-option -t "$SESSION" status-right-length 60
+
+# buttons
+tmux -S "$SOCKET" set-option -t "$SESSION" status-left '#[bg=colour25,fg=colour231,bold] work #[bg=colour25,fg=colour231,bold] tree '
+tmux -S "$SOCKET" set-option -t "$SESSION" status-right '#[bg=colour196,fg=colour231,bold] detach #[bg=colour226,fg=colour16,bold] stop '
 tmux -S "$SOCKET" bind-key -n MouseDown1StatusLeft select-window -t "$SESSION:work"
 tmux -S "$SOCKET" bind-key -n MouseDown3StatusLeft select-window -t "$SESSION:project-tree"
 tmux -S "$SOCKET" bind-key -n MouseDown1StatusRight detach-client
