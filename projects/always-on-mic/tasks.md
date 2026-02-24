@@ -16,3 +16,9 @@
 - [x] Implemented the double-Control capture helper (`capture.py`) plus README for the Ubuntu client. The script records with VAD, concatenates voiced chunks, optionally runs Whisper, and uploads the bundle to the Debian host.
 - [ ] Wire a response callback (HTTP polling or UDP) so the remote client can surface OpenClaw replies or play them back via TTS after the POST completes.
 - [ ] Add a remote health/visibility command (e.g., `pull-status`) that shows whether the host is reachable before recording.
+
+## Host-side plan
+1. **FastAPI listener** – Accept multipart `/pause` POSTs with audio metadata, save the upload, and pass metadata to `bin/pause-trigger.sh` for OpenClaw responses.
+2. **Safety layer** – Validate session ID, enforce rate limits, respect mute overrides, and log each event before invoking the trigger.
+3. **Response webhook** – Return a JSON payload so the remote side can poll a callback; include any callback URL or UDP details in the body.
+4. **Documentation** – Create `host/README.md` that explains the endpoints, env vars, and how to run the listener alongside the remote helper.
