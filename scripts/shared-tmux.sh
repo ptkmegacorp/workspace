@@ -1,4 +1,9 @@
 #!/bin/sh
+
+# starts shared-tmux session
+# Can be invoked directly for quick dual sessions; `shared-tmux-project-mode.sh`
+# wraps this to automatically show UXterms and optionally sync the tree pane.
+
 SOCKET=/tmp/shared-tmux.sock
 WORK_SESSION=shared-tmux-work
 TREE_SESSION=shared-tmux-tree
