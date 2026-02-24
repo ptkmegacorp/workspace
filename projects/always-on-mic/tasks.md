@@ -12,7 +12,7 @@
 4. **Hook response delivery**: capture the CLI output and send it via Telegram or a callback to whichever remote client posted the event.
 5. **Test end-to-end** by simulating a POST from the remote app, ensuring OpenClaw replies appear in the chat.
 
-## Future remote-app tasks (after host is ready)
-- Create the Bash/Python wrapper for microphone capture + VAD + HTTP posting.
-- Implement optional local Whisper transcription + fallback to host-owned transcription.
-- Add an interactive remote-mode CLI that can play back OpenClaw responses via TTS over Tailscale.
+## Remote-app progress
+- [x] Implemented the double-Control capture helper (`capture.py`) plus README for the Ubuntu client. The script records with VAD, concatenates voiced chunks, optionally runs Whisper, and uploads the bundle to the Debian host.
+- [ ] Wire a response callback (HTTP polling or UDP) so the remote client can surface OpenClaw replies or play them back via TTS after the POST completes.
+- [ ] Add a remote health/visibility command (e.g., `pull-status`) that shows whether the host is reachable before recording.
