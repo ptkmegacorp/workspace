@@ -1,53 +1,78 @@
 #!/bin/sh
 SOCKET=/tmp/shared-tmux.sock
-SESSION=shared-tmux
-WINDOW_WORK=work
-WINDOW_TREE=project-tree
+WORK_SESSION=shared-tmux-work
+TREE_SESSION=shared-tmux-tree
+WORK_WINDOW=work
+TREE_WINDOW=tree
+work_status_left='#[bg=colour25,fg=colour231,bold] work #[bg=colour25,fg=colour231,bold] tree '
+tree_status_left='#[bg=colour22,fg=colour231,bold] tree view '
+status_right='#[bg=colour196,fg=colour231,bold] detach #[bg=colour226,fg=colour16,bold] stop '
+tree_status_right='#[bg=colour196,fg=colour231,bold] detach #[bg=colour226,fg=colour16,bold] stop '
+
+stop_all() {
+  for session in "$WORK_SESSION" "$TREE_SESSION"; do
+    if tmux -S "$SOCKET" has-session -t "$session" 2>/dev/null; then
+      tmux -S "$SOCKET" kill-session -t "$session"
+      printf "Stopped shared tmux session '%s'.\n" "$session"
+    fi
+  done
+}
+
 if [ "$1" = "stop" ]; then
-  if tmux -S "$SOCKET" has-session -t "$SESSION" 2>/dev/null; then
-    tmux -S "$SOCKET" kill-session -t "$SESSION"
-    printf "Stopped shared tmux session '%s'.\n" "$SESSION"
-  else
-    printf "No shared tmux session was running.\n"
-  fi
+  stop_all
   exit 0
 fi
-if ! tmux -S "$SOCKET" has-session -t "$SESSION" 2>/dev/null; then
-  tmux -S "$SOCKET" new-session -d -s "$SESSION" -n "$WINDOW_WORK"
-else
-  if ! tmux -S "$SOCKET" list-windows -t "$SESSION" | grep -q "$WINDOW_WORK"; then
-    tmux -S "$SOCKET" new-window -t "$SESSION" -n "$WINDOW_WORK"
+
+ensure_session() {
+  session=$1
+  window=$2
+  if ! tmux -S "$SOCKET" has-session -t "$session" 2>/dev/null; then
+    tmux -S "$SOCKET" new-session -d -s "$session" -n "$window"
+  else
+    if ! tmux -S "$SOCKET" list-windows -t "$session" | grep -q "$window"; then
+      tmux -S "$SOCKET" new-window -t "$session" -n "$window"
+    fi
   fi
-fi
-if ! tmux -S "$SOCKET" list-windows -t "$SESSION" | grep -q "$WINDOW_TREE"; then
-  tmux -S "$SOCKET" new-window -t "$SESSION" -n "$WINDOW_TREE"
-fi
-tmux -S "$SOCKET" set-option -t "$SESSION" status-bg colour237
-tmux -S "$SOCKET" set-option -t "$SESSION" status-fg colour231
-tmux -S "$SOCKET" set-option -t "$SESSION" status-interval 5
+}
 
-# pretty theme
-tmux -S "$SOCKET" set-window-option -t "$SESSION" window-status-style "fg=colour250,bg=colour237"
-tmux -S "$SOCKET" set-window-option -t "$SESSION" window-status-current-style "fg=colour231,bg=colour31,bold"
-tmux -S "$SOCKET" set-option -t "$SESSION" status-left-length 40
-tmux -S "$SOCKET" set-option -t "$SESSION" status-right-length 60
+configure_work_session() {
+  tmux -S "$SOCKET" set-option -t "$WORK_SESSION" mouse on
+  tmux -S "$SOCKET" set-option -t "$WORK_SESSION" status-bg colour237
+  tmux -S "$SOCKET" set-option -t "$WORK_SESSION" status-fg colour231
+  tmux -S "$SOCKET" set-option -t "$WORK_SESSION" status-interval 5
+  tmux -S "$SOCKET" set-window-option -t "$WORK_SESSION" window-status-style "fg=colour250,bg=colour237"
+  tmux -S "$SOCKET" set-window-option -t "$WORK_SESSION" window-status-current-style "fg=colour231,bg=colour31,bold"
+  tmux -S "$SOCKET" set-option -t "$WORK_SESSION" status-left-length 40
+  tmux -S "$SOCKET" set-option -t "$WORK_SESSION" status-right-length 60
+  tmux -S "$SOCKET" set-option -t "$WORK_SESSION" status-left "$work_status_left"
+  tmux -S "$SOCKET" set-option -t "$WORK_SESSION" status-right "$status_right"
+  tmux -S "$SOCKET" bind-key -n MouseDown1StatusLeft select-window -t "$WORK_SESSION:$WORK_WINDOW"
+  tmux -S "$SOCKET" bind-key -n MouseDown3StatusLeft select-window -t "$WORK_SESSION:$TREE_WINDOW"
+  tmux -S "$SOCKET" bind-key -n MouseDown1StatusRight detach-client
+  tmux -S "$SOCKET" bind-key -n MouseDown3StatusRight kill-session -t "$WORK_SESSION"
+}
 
-# buttons
-tmux -S "$SOCKET" set-option -t "$SESSION" status-left '#[bg=colour25,fg=colour231,bold] work #[bg=colour25,fg=colour231,bold] tree '
-tmux -S "$SOCKET" set-option -t "$SESSION" status-right '#[bg=colour196,fg=colour231,bold] detach #[bg=colour226,fg=colour16,bold] stop '
-tmux -S "$SOCKET" bind-key -n MouseDown1StatusLeft select-window -t "$SESSION:work"
-tmux -S "$SOCKET" bind-key -n MouseDown3StatusLeft select-window -t "$SESSION:project-tree"
-tmux -S "$SOCKET" bind-key -n MouseDown1StatusRight detach-client
-tmux -S "$SOCKET" bind-key -n MouseDown3StatusRight kill-session -t "$SESSION"
-tmux -S "$SOCKET" set-option -t "$SESSION" mouse on
+configure_tree_session() {
+  tmux -S "$SOCKET" set-option -t "$TREE_SESSION" mouse on
+  tmux -S "$SOCKET" set-option -t "$TREE_SESSION" status-bg colour237
+  tmux -S "$SOCKET" set-option -t "$TREE_SESSION" status-fg colour231
+  tmux -S "$SOCKET" set-option -t "$TREE_SESSION" status-left-length 30
+  tmux -S "$SOCKET" set-option -t "$TREE_SESSION" status-right-length 60
+  tmux -S "$SOCKET" set-option -t "$TREE_SESSION" status-left "$tree_status_left"
+  tmux -S "$SOCKET" set-option -t "$TREE_SESSION" status-right "$tree_status_right"
+  tmux -S "$SOCKET" bind-key -n MouseDown1StatusRight detach-client
+  tmux -S "$SOCKET" bind-key -n MouseDown3StatusRight kill-session -t "$TREE_SESSION"
+}
+
+ensure_session "$WORK_SESSION" "$WORK_WINDOW"
+ensure_session "$TREE_SESSION" "$TREE_WINDOW"
+configure_work_session
+configure_tree_session
 sleep 0.2
-tmux -S "$SOCKET" send-keys -t "$SESSION":"$WINDOW_TREE" "cd /home/bot/.openclaw/workspace && tree -L 2" C-m
-printf "Shared tmux session '%s' is running via socket %s\n" "$SESSION" "$SOCKET"
-printf "work = tmux-work   (alias for entering the work window)\n"
-printf "tree = tmux-tree   (alias for switching to the project-tree overview)\n"
-printf "Mouse support is on, so you can click the window names and the status-right controls if your terminal supports it.\n"
-printf "MouseLeft (status-left) = switch to work window, MouseRight (status-left) = switch to tree window.\n"
-printf "MouseLeft (status-right) = detach, MouseRight (status-right) = stop the session.\n"
-printf "start-tmux already ran this script; use tmux-work or tmux-tree as needed.\n"
-printf "To exit back to your normal shell, press Ctrl-b d, run 'tmux detach', or hit 'q' inside a pager (or click Detach).\n"
-printf "Need to stop everything? Use stop-tmux, the status-right exit button, or kill the session.\n"
+tmux -S "$SOCKET" send-keys -t "$TREE_SESSION":"$TREE_WINDOW" "cd /home/bot/.openclaw/workspace && tree -L 2" C-m
+printf "Shared tmux work session '%s' and tree session '%s' are running via socket %s\n" "$WORK_SESSION" "$TREE_SESSION" "$SOCKET"
+printf "tmux-work → tmux -S %s attach -t %s\n" "$SOCKET" "$WORK_SESSION"
+printf "tmux-tree → tmux -S %s attach -t %s\n" "$SOCKET" "$TREE_SESSION"
+printf "Mouse support is on; click the status-left/right buttons if your terminal allows it.\n"
+printf "To exit the work session, detach (Ctrl-b d) or use the alias. Need to stop everything? run stop-tmux.\n"
+printf "start-tmux already ran this script; keep your tree/view sessions open as needed.\n"
