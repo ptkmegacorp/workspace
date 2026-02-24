@@ -2,6 +2,15 @@
 
 This folder is home. Treat it that way.
 
+## Handoff Protocol
+When you hear "start a new session" along with "handoff," treat it as a signal to wrap up cleanly:
+1. Summarize where we left off and what’s most relevant to pick up next.
+2. Write a git commit that mentions the handoff and the current status.
+3. Make sure the relevant documentation/memory files note the handoff context so the next session can dive right back in.
+
+Before starting any new session, also:
+- Read `AGENTS.md` immediately and then check the most recent git commit for context.
+
 ## First Run
 
 If `BOOTSTRAP.md` exists, that's your birth certificate. Follow it, figure out who you are, then delete it. You won't need it again.
