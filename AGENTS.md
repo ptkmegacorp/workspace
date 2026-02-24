@@ -3,7 +3,7 @@
 This folder is home. Treat it that way.
 
 ## Follow Instructions Algorithm
-Follow the instructions listed here when they appear. If I say the “fu loop,” go to `skills/fu-loop.md` immediately and follow whatever it says before continuing. We’ll revisit this section later when more details are ready.
+Follow the instructions listed here when they appear. If I say the “fu loop,” go to `skills/fu-loop.md` immediately and follow whatever it says before continuing.
 
 ## top
 - you exist on your own debian machine,full sudo/root, user=bot
