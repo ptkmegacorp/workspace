@@ -31,7 +31,7 @@ start_capture()
 - **Purpose**: Receive pause events from the remote app and run the OpenClaw prompt/skill, then return the response.
 - **Components**:
   - Listener (simple Flask/FastAPI) bound to localhost; accessible over Tailscale (via `tailscale up --accept-dns` bridging) to accept `/pause` POSTs with JSON `{session_id, transcript, timestamp, transcript_confidence}`.
-  - CLI invoker script, e.g., `scripts/pause-trigger.sh`:
+  - CLI invoker script, e.g., `projects/always-on-mic/bin/pause-trigger.sh`:
     ```bash
     #!/usr/bin/env bash
     set -euo pipefail
