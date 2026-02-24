@@ -22,13 +22,21 @@ fi
 if ! tmux -S "$SOCKET" list-windows -t "$SESSION" | grep -q "$WINDOW_TREE"; then
   tmux -S "$SOCKET" new-window -t "$SESSION" -n "$WINDOW_TREE"
 fi
+tmux -S "$SOCKET" set-option -t "$SESSION" status-left '#[bg=green,fg=black] work #[bg=blue,fg=white] tree '
+tmux -S "$SOCKET" set-option -t "$SESSION" status-right '#[bg=red,fg=white] detach #[bg=yellow,fg=black] stop '
+tmux -S "$SOCKET" bind-key -n MouseDown1StatusLeft select-window -t "$SESSION:work"
+tmux -S "$SOCKET" bind-key -n MouseDown3StatusLeft select-window -t "$SESSION:project-tree"
+tmux -S "$SOCKET" bind-key -n MouseDown1StatusRight detach-client
+tmux -S "$SOCKET" bind-key -n MouseDown3StatusRight kill-session -t "$SESSION"
 tmux -S "$SOCKET" set-option -t "$SESSION" mouse on
 sleep 0.2
 tmux -S "$SOCKET" send-keys -t "$SESSION":"$WINDOW_TREE" "cd /home/bot/.openclaw/workspace && tree -L 2" C-m
 printf "Shared tmux session '%s' is running via socket %s\n" "$SESSION" "$SOCKET"
 printf "work = tmux-work   (alias for entering the work window)\n"
 printf "tree = tmux-tree   (alias for switching to the project-tree overview)\n"
-printf "Mouse support is on, so you can click the window names if your terminal supports it.\n"
+printf "Mouse support is on, so you can click the window names and the status-right controls if your terminal supports it.\n"
+printf "MouseLeft (status-left) = switch to work window, MouseRight (status-left) = switch to tree window.\n"
+printf "MouseLeft (status-right) = detach, MouseRight (status-right) = stop the session.\n"
 printf "start-tmux already ran this script; use tmux-work or tmux-tree as needed.\n"
-printf "To exit back to your normal shell, press Ctrl-b d, run 'tmux detach', or hit 'q' inside a pager.\n"
-printf "Need to stop everything? Use stop-tmux to kill the shared session.\n"
+printf "To exit back to your normal shell, press Ctrl-b d, run 'tmux detach', or hit 'q' inside a pager (or click Detach).\n"
+printf "Need to stop everything? Use stop-tmux, the status-right exit button, or kill the session.\n"
