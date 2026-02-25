@@ -1,0 +1,19 @@
+# Enable/start with: `systemctl --user daemon-reload && systemctl --user enable --now audio-relay-watcher.service`
+[Unit]
+Description=Audio Relay queue watcher
+After=local-fs.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+WorkingDirectory=/home/bot/.openclaw/workspace/projects/audio-relay
+Environment="AUDIO_RELAY_ENABLE_WAKEWORD=1"
+Environment="AUDIO_RELAY_WAKEWORD_THRESHOLD=0.35"
+Environment="AUDIO_RELAY_WAKEWORD_TARGETS=hey_jarvis"
+ExecStart=/usr/bin/env python3 scripts/watch_uploads.py
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

@@ -1,10 +1,10 @@
 # Audio Relay → Whisper Integration Plan
 
 ## Quickstart
-1. **Install prerequisites**: make sure you have `tmux`, `fastapi`, `uvicorn`, `faster-whisper`, and `requests` available. A quick start is:
+1. **Install prerequisites**: make sure you have `tmux`, `fastapi`, `uvicorn`, `faster-whisper`, `requests`, and `openwakeword` available. A quick start is:
    ```bash
    sudo apt install -y tmux python3-pip
-   pip install --user fastapi uvicorn faster-whisper requests
+   python3 -m pip install --break-system-packages fastapi uvicorn faster-whisper requests openwakeword
    ```
 2. **Start the pipeline** with the bundled controller so capture, watcher, and worker come up in one tmux session:
    ```bash
@@ -36,6 +36,9 @@
 - `AUDIO_RELAY_REQUIRE_SENTENCE_PUNCTUATION` (default `1`): when enabled, transcripts must include sentence punctuation (`?`, `.`, `!`) before forwarding.
 - `AUDIO_RELAY_INTENT_KEYWORDS` (regex) + `AUDIO_RELAY_REQUIRE_INTENT_KEYWORDS` (default `0`): optional intent filter. Set `REQUIRE...=1` to require a keyword hit before forwarding.
 - `AUDIO_RELAY_RETENTION_HOURS`, `AUDIO_RELAY_MAX_QUEUE_AGE_SECONDS`, and `AUDIO_RELAY_MAX_QUEUE_CLIPS`: tune cleanup behavior for transcripts, archived audio, and queue overflow.
+- `AUDIO_RELAY_ENABLE_WAKEWORD` (default `0` in script, `1` in systemd watcher example): enable `openWakeWord` gating in the watcher so only wake hits reach Whisper.
+- `AUDIO_RELAY_WAKEWORD_THRESHOLD` (default `0.5`): minimum wake score required for enqueue.
+- `AUDIO_RELAY_WAKEWORD_TARGETS` (comma list, default `byte`): wake model label matching rule; if empty, any model score above threshold can pass.
 
 ## Testing & Wake Phrase Behavior
 1. **Start the services** with `./projects/audio-relay/scripts/control.sh start` so capture, watcher, and worker run inside tmux.
