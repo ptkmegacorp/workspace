@@ -31,9 +31,12 @@ import shutil
 import subprocess
 import sys
 import time
+import wave
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+
+import webrtcvad
 
 from faster_whisper import WhisperModel
 
@@ -64,13 +67,14 @@ WAKE_PHRASE = os.environ.get("AUDIO_RELAY_WAKE_PHRASE", "byte").strip().lower()
 _WAKE_ALIASES_RAW = os.environ.get("AUDIO_RELAY_WAKE_ALIASES", "")
 WAKE_ALIASES = [w.strip().lower() for w in _WAKE_ALIASES_RAW.split(",") if w.strip()]
 WAKE_PHRASE_BUBBLE = os.environ.get("AUDIO_RELAY_WAKE_PHRASE_BUBBLE", "1").lower() in {"1", "true", "yes", "on"}
-INTENT_KEYWORDS_PATTERN = os.environ.get(
-    "AUDIO_RELAY_INTENT_KEYWORDS",
-    "what|how|why|when|where|who|tell|ask|hey|oliver|claw|byte",
-).strip()
-REQUIRE_INTENT_KEYWORDS = os.environ.get("AUDIO_RELAY_REQUIRE_INTENT_KEYWORDS", "0").lower() in {"1", "true", "yes", "on"}
-REQUIRE_SENTENCE_PUNCTUATION = os.environ.get("AUDIO_RELAY_REQUIRE_SENTENCE_PUNCTUATION", "1").lower() in {"1", "true", "yes", "on"}
-INTENT_KEYWORDS_RE = re.compile(INTENT_KEYWORDS_PATTERN, re.IGNORECASE) if INTENT_KEYWORDS_PATTERN else None
+ENABLE_WEBRTCVAD = os.environ.get("AUDIO_RELAY_ENABLE_WEBRTCVAD", "1").lower() in {"1", "true", "yes", "on"}
+WEBRTCVAD_MODE = int(os.environ.get("AUDIO_RELAY_WEBRTCVAD_MODE", "2"))
+WEBRTCVAD_MIN_VOICED_RATIO = float(os.environ.get("AUDIO_RELAY_WEBRTCVAD_MIN_RATIO", "0.10"))
+WEBRTCVAD_MIN_VOICED_FRAMES = int(os.environ.get("AUDIO_RELAY_WEBRTCVAD_MIN_FRAMES", "4"))
+WEBRTCVAD_FRAME_MS = int(os.environ.get("AUDIO_RELAY_WEBRTCVAD_FRAME_MS", "30"))
+EVENT_ONLY_MODE = os.environ.get("AUDIO_RELAY_EVENT_ONLY", "0").lower() in {"1", "true", "yes", "on"}
+EVENTS_DIR = Path(os.environ.get("AUDIO_RELAY_EVENTS_DIR", "/tmp/audio-relay/events"))
+EVENTS_DIR.mkdir(parents=True, exist_ok=True)
 SMOKE_TEST_INSTRUCTIONS = """\
 1. Run `python projects/audio-relay/scripts/whisper_worker.py`.
 2. Drop or generate a short clip into /tmp/audio-relay/queue (e.g., use ffmpeg to create `sample.wav`).
@@ -132,6 +136,14 @@ def _write_transcript(clip_id: str, metadata: dict) -> Path:
     return target
 
 
+def _write_event(clip_id: str, metadata: dict) -> Path:
+    target = EVENTS_DIR / f"{clip_id}.json"
+    with target.open("w", encoding="utf-8") as fd:
+        json.dump(metadata, fd, ensure_ascii=False, indent=2)
+    logger.info("Event persisted: %s", target)
+    return target
+
+
 def _move_to_archive(path: Path) -> None:
     dest = ARCHIVE / path.name
     if dest.exists():
@@ -146,30 +158,33 @@ def _normalize_transcript(transcript: str) -> str:
     return " ".join(transcript.lower().split())
 
 
+def _phrase_matches(normalized: str, phrase: str) -> bool:
+    phrase = " ".join(phrase.lower().split())
+    if not phrase:
+        return False
+    # Looser matching for noisy ASR: allow token-spacing regex OR plain substring.
+    pattern = re.escape(phrase).replace(r"\ ", r"\s+")
+    return re.search(pattern, normalized) is not None or phrase in normalized
+
+
 def _wake_phrase_detected(normalized: str) -> bool:
     if not WAKE_PHRASE:
         return True
     candidates = [WAKE_PHRASE, *WAKE_ALIASES]
-    return any(candidate and candidate in normalized for candidate in candidates)
+    return any(_phrase_matches(normalized, candidate) for candidate in candidates if candidate)
 
 
 def _should_forward_transcript(transcript: str, now: float) -> tuple[bool, str, str]:
     normalized = _normalize_transcript(transcript)
-    raw = transcript.strip()
-
     if not normalized:
         return False, "transcript was empty", normalized
     if len(normalized) < MIN_FORWARD_CHARS:
         return False, f"transcript too short ({len(normalized)} chars < {MIN_FORWARD_CHARS})", normalized
     if not any(ch.isalnum() for ch in normalized):
         return False, "transcript contains no alphanumeric characters", normalized
-    if REQUIRE_SENTENCE_PUNCTUATION and not re.search(r"[?.!]", raw):
-        return False, "missing sentence punctuation (? . !)", normalized
     if not _wake_phrase_detected(normalized):
         alias_note = f" (+aliases: {', '.join(WAKE_ALIASES)})" if WAKE_ALIASES else ""
         return False, f"wake phrase '{WAKE_PHRASE}' missing{alias_note}", normalized
-    if REQUIRE_INTENT_KEYWORDS and INTENT_KEYWORDS_RE and not INTENT_KEYWORDS_RE.search(raw):
-        return False, "no intent keyword match", normalized
     if normalized == _last_forwarded_text and (now - _last_forwarded_at) < DUPLICATE_SUPPRESSION_SECONDS:
         return False, "duplicate of most recently forwarded transcript", normalized
     if (now - _last_forwarded_at) < FORWARD_COOLDOWN_SECONDS:
@@ -251,12 +266,61 @@ def _parse_chunk_timestamp_from_name(path: Path) -> Optional[datetime]:
         return None
 
 
+def _webrtcvad_speech_stats(path: Path) -> tuple[bool, str, float, int, int]:
+    if not ENABLE_WEBRTCVAD:
+        return True, "webrtcvad disabled", 1.0, 0, 0
+    if path.suffix.lower() != ".wav":
+        return True, "non-wav clip bypassed", 1.0, 0, 0
+
+    try:
+        with wave.open(str(path), "rb") as wf:
+            channels = wf.getnchannels()
+            sample_rate = wf.getframerate()
+            sample_width = wf.getsampwidth()
+            pcm = wf.readframes(wf.getnframes())
+    except Exception as exc:
+        return False, f"webrtcvad read failed: {exc!r}", 0.0, 0, 0
+
+    if channels != 1 or sample_width != 2 or sample_rate not in {8000, 16000, 32000, 48000}:
+        return False, "wav format incompatible for webrtcvad", 0.0, 0, 0
+
+    vad = webrtcvad.Vad(max(0, min(3, WEBRTCVAD_MODE)))
+    frame_bytes = int(sample_rate * WEBRTCVAD_FRAME_MS / 1000) * sample_width
+    if frame_bytes <= 0:
+        return False, "invalid webrtcvad frame size", 0.0, 0, 0
+
+    total_frames = 0
+    voiced_frames = 0
+    for i in range(0, len(pcm) - frame_bytes + 1, frame_bytes):
+        frame = pcm[i : i + frame_bytes]
+        total_frames += 1
+        if vad.is_speech(frame, sample_rate):
+            voiced_frames += 1
+
+    if total_frames == 0:
+        return False, "empty wav for webrtcvad", 0.0, 0, 0
+
+    ratio = voiced_frames / total_frames
+    if voiced_frames < WEBRTCVAD_MIN_VOICED_FRAMES or ratio < WEBRTCVAD_MIN_VOICED_RATIO:
+        return (
+            False,
+            f"low speech activity (frames={voiced_frames}/{total_frames}, ratio={ratio:.2f})",
+            ratio,
+            voiced_frames,
+            total_frames,
+        )
+
+    return True, "speech detected", ratio, voiced_frames, total_frames
+
+
 def _transcribe_clip(path: Path) -> dict:
     processing_started_at = datetime.now(timezone.utc)
     file_mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
     chunk_started_at = _parse_chunk_timestamp_from_name(path)
 
-    segments, info = MODEL.transcribe(str(path))
+    forced_language = os.environ.get("AUDIO_RELAY_FORCE_LANGUAGE", "").strip().lower() or None
+    transcribe_kwargs = {"language": forced_language} if forced_language else {}
+    segments, info = MODEL.transcribe(str(path), **transcribe_kwargs)
     transcript = " ".join(seg.text.strip() for seg in segments if seg.text.strip())
 
     metadata = {
@@ -287,18 +351,65 @@ def _transcribe_clip(path: Path) -> dict:
 def process_clip(path: Path) -> None:
     logger.info("Processing clip %s", path)
     try:
+        speech_ok, speech_reason, speech_ratio, voiced_frames, total_frames = _webrtcvad_speech_stats(path)
+        if not speech_ok:
+            logger.info("Skipping clip before whisper (%s): %s", path.name, speech_reason)
+            metadata = {
+                "clip_id": path.stem,
+                "path": str(path),
+                "recorded_at": datetime.now(timezone.utc).isoformat(),
+                "text": "",
+                "gate_passed": False,
+                "gate_reason": speech_reason,
+                "skip_reason": speech_reason,
+                "delivery": {"status": "skipped", "reason": speech_reason},
+                "vad": {
+                    "enabled": ENABLE_WEBRTCVAD,
+                    "ratio": speech_ratio,
+                    "voiced_frames": voiced_frames,
+                    "total_frames": total_frames,
+                },
+            }
+            _write_transcript(path.stem, metadata)
+            _write_event(path.stem, metadata)
+            return
+
         metadata = _transcribe_clip(path)
+        metadata["vad"] = {
+            "enabled": ENABLE_WEBRTCVAD,
+            "ratio": speech_ratio,
+            "voiced_frames": voiced_frames,
+            "total_frames": total_frames,
+        }
         _write_transcript(path.stem, metadata)
         clip_id = metadata.get("clip_id", path.stem)
         transcript = (metadata.get("text") or "").strip()
         now = time.time()
         should_forward, reason, normalized = _should_forward_transcript(transcript, now)
+        metadata["gate_passed"] = bool(should_forward)
+        metadata["gate_reason"] = reason
         if not should_forward:
             logger.info("Skipping delivery for %s: %s", clip_id, reason)
+            metadata["delivery"] = {"status": "skipped", "reason": reason}
+            _write_transcript(path.stem, metadata)
+            _write_event(path.stem, metadata)
             return
+
+        if EVENT_ONLY_MODE:
+            metadata["delivery"] = {"status": "event_only", "reason": "main app handoff"}
+            _write_transcript(path.stem, metadata)
+            _write_event(path.stem, metadata)
+            return
+
         try:
             _deliver_transcript(metadata, transcript, normalized, now)
-        except Exception:
+            metadata["delivery"] = {"status": "forwarded", "reason": "eligible"}
+            _write_transcript(path.stem, metadata)
+            _write_event(path.stem, metadata)
+        except Exception as exc:
+            metadata["delivery"] = {"status": "error", "reason": repr(exc)}
+            _write_transcript(path.stem, metadata)
+            _write_event(path.stem, metadata)
             logger.exception("Failed to deliver transcript for %s", clip_id)
     except Exception:
         logger.exception("Failed to process clip %s", path)

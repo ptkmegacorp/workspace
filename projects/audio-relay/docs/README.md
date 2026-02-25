@@ -62,8 +62,8 @@
 - Keep monitoring/logging, allow future rate limiting or keyword detection.
 
 ## Architecture
-1. **Audio Relay Stream**: Audio Relay connects over a WebSocket to `services/ws_server.py` (or the FastAPI HTTP upload for fallbacks) and streams audio frames directly into the host. Each frame is tagged and written into `/tmp/audio-relay/streams` along with metadata so the watcher can pick it up.
-2. **Watcher/Queue**: The watcher (`scripts/watch_uploads.py`) observes `/tmp/audio-relay/streams`, deduplicates or batches frames, and pushes them into `/tmp/audio-relay/queue` or notifies the Whisper worker about new content.
+1. **Direct WebSocket Ingest (primary path)**: Audio Relay connects to `services/ws_server.py` and streamed frames are written **directly** into `/tmp/audio-relay/queue` (atomic write + rename).
+2. **Optional watcher path (fallback)**: `scripts/watch_uploads.py` can still move clips from `/tmp/audio-relay/streams` or `/tmp/audio-relay/inbox` into `/tmp/audio-relay/queue` when needed, but it is optional for the direct path.
 3. **Whisper Worker**: `scripts/whisper_worker.py` polls the queue, runs faster-whisper (or another model) on each clip, and writes transcripts to `/tmp/audio-relay/transcripts` plus emit structured JSON events.
 4. **Delivery Channel**: Transcripts can be piped into Telegram (via an OpenClaw prompt/bot) or another messaging service, with support for summaries or keyword alerts.
 5. **Observability**: Log each clip, transcription confidence, timestamps, and delivery status in `projects/audio-relay/docs/ops.md` (or similar) to keep the pipeline auditable.
@@ -79,6 +79,18 @@ The fallback model keeps the worker resilient when the heavier `small` weights a
 - Initial clip-routing tests have started by pushing audio through the WebSocket and queue; still need to verify Whisper transcription and Telegram delivery end-to-end.
 - Next tests: run the watcher+worker while streaming a known clip, then confirm `/tmp/audio-relay/transcripts` contains JSON, the archive folder captures the clip, and `/tmp/audio-relay/delivery.log` records the Telegram call.
 - After tests, capture: any failures, adjusted env vars (TELEGRAM_BOT_TOKEN/CHAT_ID), and potential retries for the delivery helper.
+
+## Debug event handoff (main app -> OpenClaw)
+In debug mode, worker does **not** call OpenClaw directly. It writes per-chunk events to `/tmp/audio-relay/events` and marks `delivery.status=event_only`.
+
+Forward latest event from your main app side with:
+```bash
+projects/audio-relay/scripts/forward_events_to_openclaw.sh
+```
+Dry run:
+```bash
+DRY_RUN=1 projects/audio-relay/scripts/forward_events_to_openclaw.sh
+```
 
 ## Next Steps
 - Finalize the WebSocket server so Audio Relay can maintain a constant stream and drop chunks directly into the queue.
