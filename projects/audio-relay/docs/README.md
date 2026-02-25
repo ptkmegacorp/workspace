@@ -1,5 +1,58 @@
 # Audio Relay → Whisper Integration Plan
 
+## Quickstart
+1. **Install prerequisites**: make sure you have `tmux`, `fastapi`, `uvicorn`, `faster-whisper`, and `requests` available. A quick start is:
+   ```bash
+   sudo apt install -y tmux python3-pip
+   pip install --user fastapi uvicorn faster-whisper requests
+   ```
+2. **Start the pipeline** with the bundled controller so capture, watcher, and worker come up in one tmux session:
+   ```bash
+   ./projects/audio-relay/scripts/control.sh start
+   ```
+3. **Inspect the runtime** by tailing the panes or rerunning the controller with `status`:
+   ```bash
+   ./projects/audio-relay/scripts/control.sh status
+   ```
+   The controller shows the tmux windows and the last few lines from each pane so you can confirm the WebSocket server, watcher, and worker are alive.
+4. **Stop everything** when you are done:
+   ```bash
+   ./projects/audio-relay/scripts/control.sh stop
+   ```
+   The script kills the tmux session cleanly and leaves the `/tmp/audio-relay` buckets in place for the next start.
+
+## Environment Variables
+- `AUDIO_RELAY_WS_PORT` (default `8765`): port exposed by `services/ws_server.py` for Audio Relay to stream frames into.
+- `AUDIO_RELAY_SESSION` (default `audio-relay`): tmux session name used by `scripts/control.sh` to orchestrate the capture, watcher, and worker panes.
+- `WHISPER_MODEL`, `WHISPER_FALLBACK_MODEL`, `WHISPER_DEVICE`: control the faster-whisper model families and device used by `scripts/whisper_worker.py`. Defaults are `small`, `tiny`, and `auto` respectively.
+- `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`: required when the worker should deliver transcripts via Telegram. Missing values cause the delivery helper to raise unless `DISABLE_TELEGRAM_OUTPUT` is set.
+- `AUDIO_RELAY_DELIVERY_LOG`: override path for `/tmp/audio-relay/delivery.log` if you want to capture delivery audit trails elsewhere.
+- `AUDIO_RELAY_WAKE_PHRASE` (default `byte`): normalized token that must appear in transcripts before `ROUTE_TO_OPENCLAW_AGENT` forwards a message. Use this to gate responses to an explicit wake-up cue.
+- `AUDIO_RELAY_WAKE_PHRASE_BUBBLE` (default `1`/true): when enabled, the worker emits an auxiliary Telegram message whenever the wake phrase is detected so you can observe the gating behavior live.
+- `ROUTE_TO_OPENCLAW_AGENT`: set to `1`/`true` to forward transcripts to `openclaw agent` instead of sending Telegram messages directly. When enabled, wake phrase, cooldown, and duplicate filtering are enforced.
+- `OPENCLAW_REPLY_CHANNEL` (default `telegram`) and `OPENCLAW_REPLY_TO` (falls back to `TELEGRAM_CHAT_ID`): configure where `openclaw agent` should deliver the forwarded text.
+- `DISABLE_TELEGRAM_OUTPUT`: set to `1` to skip Telegram delivery entirely and keep transcripts local while you iterate.
+- `AUDIO_RELAY_MIN_FORWARD_CHARS` and `AUDIO_RELAY_FORWARD_COOLDOWN_SECONDS`: adjust the gating thresholds for `ROUTE_TO_OPENCLAW_AGENT`, ensuring short clips or repeated phrases do not flood the agent.
+- `AUDIO_RELAY_REQUIRE_SENTENCE_PUNCTUATION` (default `1`): when enabled, transcripts must include sentence punctuation (`?`, `.`, `!`) before forwarding.
+- `AUDIO_RELAY_INTENT_KEYWORDS` (regex) + `AUDIO_RELAY_REQUIRE_INTENT_KEYWORDS` (default `0`): optional intent filter. Set `REQUIRE...=1` to require a keyword hit before forwarding.
+- `AUDIO_RELAY_RETENTION_HOURS`, `AUDIO_RELAY_MAX_QUEUE_AGE_SECONDS`, and `AUDIO_RELAY_MAX_QUEUE_CLIPS`: tune cleanup behavior for transcripts, archived audio, and queue overflow.
+
+## Testing & Wake Phrase Behavior
+1. **Start the services** with `./projects/audio-relay/scripts/control.sh start` so capture, watcher, and worker run inside tmux.
+2. **Produce a clip** and drop it into the queue for processing:
+   ```bash
+   ffmpeg -f lavfi -i "sine=frequency=440:duration=2" /tmp/audio-relay/queue/test-sine.wav
+   ```
+3. **Watch the worker logs** (via `status` or `tmux attach`) and confirm `/tmp/audio-relay/transcripts/test-sine.json` appears. The delivery helper should log to `/tmp/audio-relay/delivery.log` or forward through Telegram/OpenClaw depending on your config.
+4. **Validate wake phrase + intent gating** by setting `ROUTE_TO_OPENCLAW_AGENT=1` and tuning `AUDIO_RELAY_WAKE_PHRASE`:
+   - Only transcripts that contain the normalized wake phrase, pass `AUDIO_RELAY_MIN_FORWARD_CHARS`, and satisfy punctuation/intent filters are forwarded to `openclaw agent`.
+   - When `AUDIO_RELAY_REQUIRE_SENTENCE_PUNCTUATION=1`, clipped fragments without `?`, `.`, or `!` are skipped.
+   - Optional keyword gating: set `AUDIO_RELAY_REQUIRE_INTENT_KEYWORDS=1` and tune `AUDIO_RELAY_INTENT_KEYWORDS` for stricter intent detection.
+   - When `AUDIO_RELAY_WAKE_PHRASE_BUBBLE` is enabled, the worker still sends a short `"Wake phrase detected"` Telegram message so you can see activations even when the main transcript is rerouted through OpenClaw.
+   - Lower the cooldown by adjusting `AUDIO_RELAY_FORWARD_COOLDOWN_SECONDS` if you want faster turnarounds during testing, but keep it ≥8 seconds to avoid duplicate suppression.
+   - If OpenClaw Telegram ingest still drops valid requests, set Telegram adapter `requireMention: false` in your OpenClaw config so voice messages do not need an explicit @mention.
+5. **Stop** with `./projects/audio-relay/scripts/control.sh stop` once the smoke test finishes.
+
 ## Goals
 - Capture the always-on Audio Relay feed and hand clips to a local Whisper service.
 - Transcribe each clip, then forward the text through Telegram or another delivery channel.

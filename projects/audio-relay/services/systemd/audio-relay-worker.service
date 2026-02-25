@@ -1,0 +1,35 @@
+# Enable/start with: `systemctl --user daemon-reload && systemctl --user enable --now audio-relay-worker.service`
+[Unit]
+Description=Audio Relay Whisper worker
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+WorkingDirectory=/home/bot/.openclaw/workspace/projects/audio-relay
+Environment="PYTHONUNBUFFERED=1"
+Environment="TELEGRAM_BOT_TOKEN="
+Environment="TELEGRAM_CHAT_ID="
+Environment="OPENCLAW_REPLY_CHANNEL=telegram"
+Environment="OPENCLAW_REPLY_TO="
+Environment="ROUTE_TO_OPENCLAW_AGENT=0"
+Environment="AUDIO_RELAY_WAKE_PHRASE=byte"
+Environment="AUDIO_RELAY_WAKE_PHRASE_BUBBLE=1"
+Environment="AUDIO_RELAY_RETENTION_HOURS=24"
+Environment="AUDIO_RELAY_MAX_QUEUE_AGE_SECONDS=20"
+Environment="AUDIO_RELAY_MAX_QUEUE_CLIPS=6"
+Environment="AUDIO_RELAY_MIN_FORWARD_CHARS=25"
+Environment="AUDIO_RELAY_REQUIRE_SENTENCE_PUNCTUATION=1"
+Environment="AUDIO_RELAY_INTENT_KEYWORDS=what|how|why|when|where|who|tell|ask|hey|oliver|claw|byte"
+Environment="AUDIO_RELAY_REQUIRE_INTENT_KEYWORDS=0"
+Environment="AUDIO_RELAY_FORWARD_COOLDOWN_SECONDS=8"
+Environment="WHISPER_MODEL=small"
+Environment="WHISPER_FALLBACK_MODEL=base"
+Environment="WHISPER_DEVICE=auto"
+ExecStart=/usr/bin/env python3 scripts/whisper_worker.py
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
