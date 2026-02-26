@@ -27,6 +27,7 @@ import json
 import logging
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -61,6 +62,7 @@ RETENTION_HOURS = float(os.environ.get("AUDIO_RELAY_RETENTION_HOURS", "24"))
 MAX_QUEUE_AGE_SECONDS = float(os.environ.get("AUDIO_RELAY_MAX_QUEUE_AGE_SECONDS", "20"))
 MAX_QUEUE_CLIPS = int(os.environ.get("AUDIO_RELAY_MAX_QUEUE_CLIPS", "6"))
 MIN_FORWARD_CHARS = int(os.environ.get("AUDIO_RELAY_MIN_FORWARD_CHARS", "25"))
+MIN_FORWARD_WORDS = int(os.environ.get("AUDIO_RELAY_MIN_FORWARD_WORDS", "4"))
 FORWARD_COOLDOWN_SECONDS = float(os.environ.get("AUDIO_RELAY_FORWARD_COOLDOWN_SECONDS", "8"))
 DUPLICATE_SUPPRESSION_SECONDS = int(os.environ.get("AUDIO_RELAY_DUPLICATE_SUPPRESSION_SECONDS", "120"))
 WAKE_PHRASE = os.environ.get("AUDIO_RELAY_WAKE_PHRASE", "byte").strip().lower()
@@ -182,6 +184,11 @@ def _should_forward_transcript(transcript: str, now: float) -> tuple[bool, str, 
         return False, f"transcript too short ({len(normalized)} chars < {MIN_FORWARD_CHARS})", normalized
     if not any(ch.isalnum() for ch in normalized):
         return False, "transcript contains no alphanumeric characters", normalized
+    words = [w for w in re.findall(r"[a-z0-9']+", normalized) if w]
+    if len(words) < MIN_FORWARD_WORDS:
+        return False, f"transcript has too few words ({len(words)} < {MIN_FORWARD_WORDS})", normalized
+    if words and len(set(words)) == 1 and len(words) >= 2:
+        return False, "transcript repeats a single token", normalized
     if not _wake_phrase_detected(normalized):
         alias_note = f" (+aliases: {', '.join(WAKE_ALIASES)})" if WAKE_ALIASES else ""
         return False, f"wake phrase '{WAKE_PHRASE}' missing{alias_note}", normalized
@@ -199,12 +206,14 @@ def _deliver_transcript(metadata: dict, transcript: str, normalized: str, now: f
     disable_telegram = os.environ.get("DISABLE_TELEGRAM_OUTPUT", "0").lower() in {"1", "true", "yes", "on"}
 
     if route_to_agent:
-        channel = os.environ.get("OPENCLAW_REPLY_CHANNEL", "telegram")
-        target = os.environ.get("OPENCLAW_REPLY_TO", os.environ.get("TELEGRAM_CHAT_ID", ""))
-        if not target:
-            raise RuntimeError("OPENCLAW_REPLY_TO (or TELEGRAM_CHAT_ID) must be set")
+        use_local = os.environ.get("OPENCLAW_LOCAL", "0").lower() in {"1", "true", "yes", "on"}
+        agent_id = os.environ.get("OPENCLAW_AGENT_ID", "main").strip()
 
-        if WAKE_PHRASE_BUBBLE:
+        # Configurable delivery path (defaults to Telegram peer routing).
+        channel = os.environ.get("OPENCLAW_REPLY_CHANNEL", "telegram").strip() or "telegram"
+        target = os.environ.get("OPENCLAW_REPLY_TO", "").strip()
+
+        if WAKE_PHRASE_BUBBLE and (os.environ.get("OPENCLAW_ROUTE_MODE") or "telegram").strip().lower() != "cli":
             try:
                 send_transcript(
                     {
@@ -217,26 +226,150 @@ def _deliver_transcript(metadata: dict, transcript: str, normalized: str, now: f
             except Exception:
                 logger.exception("Failed wake-phrase bubble for %s", clip_id)
 
-        subprocess.run(
-            [
+        route_mode = (os.environ.get("OPENCLAW_ROUTE_MODE") or "telegram").strip().lower()
+
+        if route_mode in {"agent", "agent-deliver"}:
+            cmd = [
                 "openclaw",
                 "agent",
-                "--channel",
-                channel,
-                "--to",
-                target,
+                "--agent",
+                agent_id,
                 "--message",
                 transcript,
-                "--deliver",
                 "--timeout",
                 "120",
-            ],
-            check=True,
-            timeout=130,
-        )
+                "--deliver",
+                "--reply-channel",
+                channel,
+            ]
+            if target:
+                cmd.extend(["--reply-to", target])
+            logger.info("Agent-deliver command: %s", " ".join(shlex.quote(c) for c in cmd))
+            subprocess.run(cmd, check=True, timeout=130)
+            _last_forwarded_text = normalized
+            _last_forwarded_at = now
+            logger.info("Forwarded transcript via agent deliver for %s (channel=%s, target=%s)", clip_id, channel, target)
+            return
+
+        if route_mode in {"inject", "chat-inject"}:
+            session_key = (os.environ.get("OPENCLAW_SESSION_KEY") or "agent:main:main").strip()
+            params = {
+                "sessionKey": session_key,
+                "message": transcript,
+            }
+            cmd = [
+                "openclaw",
+                "gateway",
+                "call",
+                "chat.inject",
+                "--params",
+                json.dumps(params),
+                "--json",
+            ]
+            logger.info("Chat inject command: %s", " ".join(shlex.quote(c) for c in cmd))
+            subprocess.run(cmd, check=True, timeout=30)
+            _last_forwarded_text = normalized
+            _last_forwarded_at = now
+            logger.info("Forwarded transcript via chat.inject for %s", clip_id)
+            return
+
+        if route_mode in {"cli", "gateway"}:
+            session_key = (os.environ.get("OPENCLAW_SESSION_KEY") or "agent:main:audio-relay-cli").strip()
+
+            if (os.environ.get("OPENCLAW_INJECT_TRANSCRIPT_TO_TUI") or "1").lower() in {"1", "true", "yes", "on"}:
+                inject_cmd = [
+                    "openclaw", "gateway", "call", "chat.inject",
+                    "--params", json.dumps({"sessionKey": session_key, "message": f"[whisper] {transcript}"}),
+                    "--json",
+                ]
+                logger.info("TUI inject command: %s", " ".join(shlex.quote(c) for c in inject_cmd))
+                subprocess.run(inject_cmd, check=False, timeout=30)
+
+            if route_mode == "gateway":
+                params = {
+                    "idempotencyKey": f"{clip_id}-{int(now*1000)}",
+                    "agentId": agent_id,
+                    "sessionKey": session_key,
+                    "message": transcript,
+                }
+                cmd = [
+                    "openclaw",
+                    "gateway",
+                    "call",
+                    "agent",
+                    "--params",
+                    json.dumps(params),
+                    "--expect-final",
+                    "--json",
+                ]
+                logger.info("Gateway send command: %s", " ".join(shlex.quote(c) for c in cmd))
+                subprocess.run(cmd, check=True, timeout=130)
+            else:
+                # Route transcript into the local CLI agent turn and keep output in tmux/stdout.
+                cmd = [
+                    "openclaw",
+                    "agent",
+                    "--session-id",
+                    "audio-relay-cli",
+                    "--agent",
+                    agent_id,
+                    "--message",
+                    transcript,
+                    "--timeout",
+                    "120",
+                ]
+                logger.info("CLI send command: %s", " ".join(shlex.quote(c) for c in cmd))
+                subprocess.run(cmd, check=True, timeout=130)
+
+            # Optional mirror to Telegram so you can monitor from chat while watching tmux.
+            if (os.environ.get("OPENCLAW_MIRROR_TO_TELEGRAM") or "1").lower() in {"1", "true", "yes", "on"}:
+                mirror_target = (os.environ.get("OPENCLAW_REPLY_TO") or "").strip()
+                if mirror_target:
+                    mirror_text = f"[relay/{route_mode}] {transcript}"
+                    subprocess.run(
+                        [
+                            "openclaw", "message", "send",
+                            "--channel", "telegram",
+                            "--target", mirror_target,
+                            "--message", mirror_text,
+                        ],
+                        check=False,
+                        timeout=30,
+                    )
+
+            _last_forwarded_text = normalized
+            _last_forwarded_at = now
+            logger.info("Forwarded transcript via %s for %s", route_mode, clip_id)
+            return
+
+        # Channel injection mode (telegram/whatsapp/etc).
+        route_channel = channel
+        route_target = target
+        if route_mode == "whatsapp":
+            route_channel = "whatsapp"
+            route_target = (os.environ.get("OPENCLAW_WHATSAPP_TO") or route_target or "").strip()
+        elif route_mode == "telegram":
+            route_channel = "telegram"
+
+        if not route_target:
+            raise RuntimeError("OPENCLAW target is required when ROUTE_TO_OPENCLAW_AGENT=1 and OPENCLAW_ROUTE_MODE is channel mode")
+
+        cmd = [
+            "openclaw",
+            "message",
+            "send",
+            "--channel",
+            route_channel,
+            "--target",
+            route_target,
+            "--message",
+            transcript,
+        ]
+        logger.info("Channel send command: %s", " ".join(shlex.quote(c) for c in cmd))
+        subprocess.run(cmd, check=True, timeout=130)
         _last_forwarded_text = normalized
         _last_forwarded_at = now
-        logger.info("Forwarded transcript to openclaw agent for %s", clip_id)
+        logger.info("Forwarded transcript via openclaw message send for %s (channel=%s, target=%s)", clip_id, route_channel, route_target)
         return
 
     if disable_telegram:
@@ -331,9 +464,17 @@ def _transcribe_clip(path: Path) -> dict:
         "source_file_mtime": file_mtime.isoformat(),
         "duration": getattr(info, "duration", None),
         "language": getattr(info, "language", "unknown"),
+        "language_probability": getattr(info, "language_probability", None),
         "text": transcript,
         "segments": [
-            {"text": seg.text.strip(), "start": seg.start, "end": seg.end}
+            {
+                "text": seg.text.strip(),
+                "start": seg.start,
+                "end": seg.end,
+                "avg_logprob": getattr(seg, "avg_logprob", None),
+                "no_speech_prob": getattr(seg, "no_speech_prob", None),
+                "compression_ratio": getattr(seg, "compression_ratio", None),
+            }
             for seg in segments
             if seg.text.strip()
         ],
@@ -375,6 +516,11 @@ def process_clip(path: Path) -> None:
             return
 
         metadata = _transcribe_clip(path)
+        transcript_preview = (metadata.get("text") or "").strip()
+        if transcript_preview:
+            logger.info("Transcript text [%s]: %s", path.stem, transcript_preview)
+        else:
+            logger.info("Transcript text [%s]: <empty>", path.stem)
         metadata["vad"] = {
             "enabled": ENABLE_WEBRTCVAD,
             "ratio": speech_ratio,
