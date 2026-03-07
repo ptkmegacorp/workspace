@@ -1,0 +1,11 @@
+body{margin:0;background:#111;color:#eee;font-family:system-ui,Arial,sans-serif}
+.top{padding:10px;border-bottom:1px solid #2a2a2a}
+.card{background:#1a1a1a;border:1px solid #303030;border-radius:10px;padding:10px;max-width:520px}
+.hint{color:#aaa;font-size:12px;margin-top:6px}
+.chat{display:flex;height:calc(100vh - 90px)}
+.col{width:50%;padding:14px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+.left{border-right:1px solid #2a2a2a}
+.bubble{max-width:90%;padding:10px 12px;border-radius:12px;white-space:pre-wrap;line-height:1.35}
+.l{align-self:flex-start;background:#202020;border:1px solid #333}
+.r{align-self:flex-end;background:#1d4ed8;color:#fff}
+.small{font-size:11px;color:#aaa;margin-top:4px}

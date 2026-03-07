@@ -8,24 +8,30 @@ const execFileAsync = promisify(execFile);
 
 const QUEUE_DIR = process.env.QUEUE_DIR || '/tmp/audio-relay-lite/queue';
 const ARCHIVE_DIR = process.env.ARCHIVE_DIR || '/tmp/audio-relay-lite/archive';
-const WHISPER_MODEL = process.env.WHISPER_MODEL || 'tiny';
+const WHISPER_MODEL = process.env.WHISPER_MODEL || 'tiny.en';
 // wake phrase gating removed (always forward transcripts)
 const OPENCLAW_REPLY_CHANNEL = process.env.OPENCLAW_REPLY_CHANNEL || 'telegram';
 const OPENCLAW_REPLY_TO = process.env.OPENCLAW_REPLY_TO || '';
 const OPENCLAW_BIN = process.env.OPENCLAW_BIN || '/home/bot/.npm-global/bin/openclaw';
 const OPENCLAW_FORWARD_MODE = process.env.OPENCLAW_FORWARD_MODE || 'agent_only';
+const EVENTS_FILE = process.env.EVENTS_FILE || '/tmp/audio-relay-lite/events.jsonl';
 
 fs.mkdirSync(QUEUE_DIR, { recursive: true });
 fs.mkdirSync(ARCHIVE_DIR, { recursive: true });
 
 function log(msg) { console.log(`[worker] ${msg}`); }
 
+function appendEvent(evt) {
+  const line = JSON.stringify({ ts: Date.now(), ...evt }) + '\n';
+  fs.appendFileSync(EVENTS_FILE, line);
+}
+
 async function transcribe(file) {
   const py = [
     'import sys',
     'from faster_whisper import WhisperModel',
-    `m=WhisperModel("${WHISPER_MODEL}", device="cpu")`,
-    'segments,info=m.transcribe(sys.argv[1])',
+    `m=WhisperModel("${WHISPER_MODEL}", device="cpu", compute_type="int8")`,
+    'segments,info=m.transcribe(sys.argv[1], beam_size=5, vad_filter=False, condition_on_previous_text=False)',
     'print(" ".join([s.text.strip() for s in segments if s.text.strip()]))',
   ].join('; ');
   const { stdout } = await execFileAsync('python3', ['-c', py, file], { timeout: 120000, maxBuffer: 1024 * 1024 });
@@ -43,8 +49,8 @@ async function forwardToOpenClaw(text) {
       '--target', OPENCLAW_REPLY_TO,
       '--message', text,
     ];
-    await execFileAsync(OPENCLAW_BIN, args, { timeout: 90000, maxBuffer: 1024 * 1024, env });
-    return;
+    const { stdout } = await execFileAsync(OPENCLAW_BIN, args, { timeout: 90000, maxBuffer: 1024 * 1024, env });
+    return String(stdout || '').trim();
   }
 
   // default: keep relay isolated in OpenClaw session flow (no direct Telegram delivery)
@@ -53,7 +59,8 @@ async function forwardToOpenClaw(text) {
     '--message', text,
     '--timeout', '45',
   ];
-  await execFileAsync(OPENCLAW_BIN, args, { timeout: 90000, maxBuffer: 1024 * 1024, env });
+  const { stdout } = await execFileAsync(OPENCLAW_BIN, args, { timeout: 90000, maxBuffer: 1024 * 1024, env });
+  return String(stdout || '').trim();
 }
 
 let busy = false;
@@ -75,14 +82,20 @@ async function tick() {
     log(`TRANSCRIPT >>> ${text || '(empty)'}`);
 
     if (text) {
-      await forwardToOpenClaw(text);
+      const rawReply = await forwardToOpenClaw(text);
+      const reply = (rawReply || '').trim();
+      if (reply) log(`REPLY <<< ${reply}`);
       log('forwarded -> openclaw');
+      appendEvent({ type: 'chat', transcript: text, reply });
+    } else {
+      appendEvent({ type: 'chat', transcript: '', reply: '' });
     }
 
     const dest = path.join(ARCHIVE_DIR, path.basename(file));
     fs.renameSync(file, dest);
   } catch (e) {
     log(`error: ${e.message}`);
+    appendEvent({ type: 'error', error: e.message });
     try {
       if (file && fs.existsSync(file)) {
         const failed = path.join(ARCHIVE_DIR, path.basename(file, '.wav') + '.failed.wav');

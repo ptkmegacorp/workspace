@@ -4,8 +4,9 @@ import fs from 'node:fs';
 
 const QUEUE_DIR = process.env.QUEUE_DIR || '/tmp/audio-relay-lite/queue';
 const TMP_DIR = process.env.TMP_DIR || '/tmp/audio-relay-lite/tmp';
-const SOURCE_ENV = process.env.AUDIO_RELAY_SOURCE || '';
+const SOURCE = process.env.AUDIO_RELAY_SOURCE || 'alsa_output.pci-0000_00_03.0.hdmi-stereo.monitor';
 const DOUBLE_TAP_MS = Number(process.env.DOUBLE_TAP_MS || 450);
+const STATE_FILE = process.env.STATE_FILE || '/tmp/audio-relay-lite/state.json';
 
 fs.mkdirSync(QUEUE_DIR, { recursive: true });
 fs.mkdirSync(TMP_DIR, { recursive: true });
@@ -25,33 +26,23 @@ function log(msg) {
   console.log(`[rec] ${msg}`);
 }
 
+function writeState(patch = {}) {
+  let cur = {};
+  try { cur = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')); } catch {}
+  const next = {
+    recording: false,
+    status: 'idle',
+    updatedAt: new Date().toISOString(),
+    ...cur,
+    ...patch,
+    updatedAt: new Date().toISOString(),
+  };
+  fs.writeFileSync(STATE_FILE, JSON.stringify(next));
+}
+
 function discoverPulseSource() {
-  if (SOURCE_ENV) return SOURCE_ENV;
-  try {
-    const out = spawn('pactl', ['list', 'short', 'sources'], { stdio: ['ignore', 'pipe', 'ignore'] });
-    let data = '';
-    out.stdout.on('data', (b) => { data += String(b); });
-    return new Promise((resolve) => {
-      out.on('exit', () => {
-        const lines = data.split(/\r?\n/).filter(Boolean);
-        // prefer true input devices, avoid .monitor
-        for (const line of lines) {
-          const cols = line.split('\t');
-          const name = cols[1] || '';
-          if (name.includes('.monitor')) continue;
-          if (name.includes('input')) return resolve(name);
-        }
-        for (const line of lines) {
-          const cols = line.split('\t');
-          const name = cols[1] || '';
-          if (!name.includes('.monitor')) return resolve(name);
-        }
-        resolve('default');
-      });
-    });
-  } catch {
-    return Promise.resolve('default');
-  }
+  // Deliberately fixed source (no auto switching)
+  return Promise.resolve(SOURCE);
 }
 
 async function startRec() {
@@ -63,12 +54,15 @@ async function startRec() {
   recProc = spawn('ffmpeg', [
     '-hide_banner','-loglevel','error','-nostdin',
     '-f','pulse','-i', source,
-    '-ac','1','-ar','16000','-c:a','pcm_s16le',
+    '-ac','1','-ar','16000',
+    '-af','volume=20dB',
+    '-c:a','pcm_s16le',
     recPathTmp,
   ], { stdio: ['ignore','pipe','pipe'] });
 
   recProc.stderr.on('data', () => {});
   log(`REC START -> ${recPathTmp} (source=${source})`);
+  writeState({ recording: true, status: 'recording', source, currentClip: recPathTmp });
 }
 
 function stopRec() {
@@ -81,12 +75,15 @@ function stopRec() {
       if (fs.existsSync(recPathTmp) && fs.statSync(recPathTmp).size > 2048) {
         fs.renameSync(recPathTmp, recPathFinal);
         log(`REC STOP -> QUEUED: ${recPathFinal}`);
+        writeState({ recording: false, status: 'queued', lastClip: recPathFinal, currentClip: '' });
       } else {
         if (fs.existsSync(recPathTmp)) fs.unlinkSync(recPathTmp);
         log('REC STOP -> DROPPED (too short)');
+        writeState({ recording: false, status: 'dropped', currentClip: '' });
       }
     } catch (e) {
       log(`REC STOP error: ${e.message}`);
+      writeState({ recording: false, status: `error: ${e.message}`, currentClip: '' });
     }
   });
 }
@@ -213,4 +210,5 @@ function runEvtest() {
   });
 }
 
+writeState({ recording: false, status: 'listening' });
 runEvtest();

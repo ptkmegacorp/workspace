@@ -1,7 +1,9 @@
 [worker] ready (queue polling every 1s)
 [rec] Listening for double-tap Ctrl via evtest on /dev/input/event4 ...
-[rec] REC START -> /tmp/audio-relay-lite/tmp/manual-20260307-160113.wav (source=alsa_output.pci-0000_00_03.0.hdmi-stereo.monitor)
-[rec] REC STOP -> QUEUED: /tmp/audio-relay-lite/queue/manual-20260307-160113.wav
-[worker] processing manual-20260307-160113.wav
-[worker] TRANSCRIPT >>> Okay great so yeah I'm still just testing something out quick so this is just another test.
+audio-relay-lite web on http://127.0.0.1:3092
+[rec] REC START -> /tmp/audio-relay-lite/tmp/manual-20260307-162404.wav (source=alsa_output.pci-0000_00_03.0.hdmi-stereo.monitor)
+[rec] REC STOP -> QUEUED: /tmp/audio-relay-lite/queue/manual-20260307-162404.wav
+[worker] processing manual-20260307-162404.wav
+[worker] TRANSCRIPT >>> This is test number, I don't know, but it's the most recent test, so I hope we'll see you over here.
+[worker] REPLY <<< Got it — most recent test received ✅ I’m here and seeing this thread fine.
 [worker] forwarded -> openclaw
