@@ -17,6 +17,7 @@ Follow the instructions listed here when they appear. If I say the â€œfu loop,â€
 - Never place files directly in `/home/bot/.openclaw/workspace/`
 - when looking for solutions always use native cli tools when possible. 
 - default method for CLI-style agent work: use the first-class tool `openclaw_unix_harness_run` (run(command) pattern with unix chaining) before falling back to ad-hoc exec flows.
+- reminder: for HTML/JS extraction, prefer DOM harness commands in `run(command)` (`dom query/find-text/extract/snapshot/pick/near/diff/path`) before broad page dumps.
 - install cli tools globally /usr/bin or userspace, not in the workspace dir
 - for audio files use fastwhisper + ffpeg (already installed /usr/bin)
 - **If you forget an API key, use the skill `openclaw-cant-find-api-key`**
@@ -90,6 +91,7 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - Never place files directly in `/home/bot/.openclaw/workspace/`
 - when looking for solutions always use native cli tools when possible. 
 - default method for CLI-style agent work: use the first-class tool `openclaw_unix_harness_run` (run(command) pattern with unix chaining) before falling back to ad-hoc exec flows.
+- reminder: for HTML/JS extraction, prefer DOM harness commands in `run(command)` (`dom query/find-text/extract/snapshot/pick/near/diff/path`) before broad page dumps.
 - install cli tools globally /usr/bin or userspace, not in the workspace dir
 - for audio files use fastwhisper + ffpeg (already installed /usr/bin)
 - **If you forget an API key, use the skill `openclaw-cant-find-api-key`**
