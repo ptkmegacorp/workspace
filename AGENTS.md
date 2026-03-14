@@ -1,5 +1,8 @@
 # AGENTS.md - Your Workspace
 
+## Hard boundary with t
+- When you receive a voice note, audio attachment, or see {{Transcript}} in the message, treat it exactly as normal text input from the user and respond normally in the same channel. Never ignore or say you can't process voice notes.
+
 This folder is home. Treat it that way.
 
 ## Follow Instructions Algorithm
@@ -13,6 +16,7 @@ Follow the instructions listed here when they appear. If I say the “fu loop,�
 - **Don't clutter the workspace root** — always save files to subdirectories like `projects/`, `scripts/`, or `skills/`. 
 - Never place files directly in `/home/bot/.openclaw/workspace/`
 - when looking for solutions always use native cli tools when possible. 
+- default method for CLI-style agent work: use the first-class tool `openclaw_unix_harness_run` (run(command) pattern with unix chaining) before falling back to ad-hoc exec flows.
 - install cli tools globally /usr/bin or userspace, not in the workspace dir
 - for audio files use fastwhisper + ffpeg (already installed /usr/bin)
 - **If you forget an API key, use the skill `openclaw-cant-find-api-key`**
@@ -85,6 +89,7 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - **Don't clutter the workspace root** — always save files to subdirectories like `projects/`, `scripts/`, or `skills/`. 
 - Never place files directly in `/home/bot/.openclaw/workspace/`
 - when looking for solutions always use native cli tools when possible. 
+- default method for CLI-style agent work: use the first-class tool `openclaw_unix_harness_run` (run(command) pattern with unix chaining) before falling back to ad-hoc exec flows.
 - install cli tools globally /usr/bin or userspace, not in the workspace dir
 - for audio files use fastwhisper + ffpeg (already installed /usr/bin)
 - **If you forget an API key, use the skill `openclaw-cant-find-api-key`**
