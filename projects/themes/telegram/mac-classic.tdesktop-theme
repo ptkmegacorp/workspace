@@ -1,0 +1,68 @@
+// Old Macintosh-inspired grayscale Telegram Desktop theme
+// Note: Telegram Desktop does not allow full custom fonts in themes.
+
+windowBg: #D7D7D7;
+windowFg: #111111;
+windowFgActive: #000000;
+windowSubTextFg: #4B4B4B;
+windowSubTextFgActive: #2E2E2E;
+windowBoldFg: #0A0A0A;
+windowBoldFgOver: #000000;
+windowBgOver: #C8C8C8;
+windowBgRipple: #BDBDBD;
+windowDividerFg: #A9A9A9;
+windowDividerFgOver: #9A9A9A;
+
+menuBg: #D0D0D0;
+menuBgOver: #BEBEBE;
+menuFg: #111111;
+menuFgDisabled: #7A7A7A;
+menuIconFg: #222222;
+menuIconFgOver: #000000;
+menuSubmenuArrowFg: #404040;
+menuSeparatorFg: #A5A5A5;
+
+scrollBarBg: #C5C5C5;
+scrollBarBgOver: #B4B4B4;
+scrollBg: #E2E2E2;
+scrollBgOver: #D6D6D6;
+
+historyBackground: #ECECEC;
+historyTextInFg: #111111;
+historyTextOutFg: #111111;
+historyFileNameInFg: #111111;
+historyFileNameOutFg: #111111;
+
+historyMessageInBg: #F7F7F7;
+historyMessageInBgSelected: #E8E8E8;
+historyMessageOutBg: #DDE8FF;
+historyMessageOutBgSelected: #CFDCF6;
+
+historyInReplyLine: #7A7A7A;
+historyOutReplyLine: #456AB3;
+historyInReplyNameFg: #2E2E2E;
+historyOutReplyNameFg: #2D4F90;
+
+historyComposeAreaBg: #DCDCDC;
+historyComposeAreaFg: #111111;
+historyComposeAreaPlaceholderFg: #666666;
+
+boxBg: #E3E3E3;
+boxTextFg: #111111;
+boxTextFgGood: #1A6A2D;
+boxTextFgError: #A22323;
+
+contactsBg: #DADADA;
+contactsBgOver: #C9C9C9;
+contactsNameFg: #111111;
+contactsStatusFg: #5A5A5A;
+contactsStatusFgOver: #3F3F3F;
+
+activeButtonBg: #BFBFBF;
+activeButtonBgOver: #AEAEAE;
+activeButtonBgRipple: #A2A2A2;
+activeButtonFg: #0F0F0F;
+
+accentTextFg: #2E4FA3;
+linkFg: #2E4FA3;
+linkFgOver: #1D3A83;
