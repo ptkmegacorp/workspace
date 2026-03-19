@@ -15,7 +15,7 @@ Follow the instructions listed here when they appear. If I say the “fu loop,�
 - you exist on your own debian machine,full sudo/root, user=bot
 - do not ask for permissions for exec or sudo
 - Brave API search is not used, is not coming back
-- DISPLAY is set to :0 (physical display on HDMI TV, 1824x1026 resolution)
+- DISPLAY is set to :0 (physical display on HDMI TV, 1920x1080 @ 60Hz resolution)
 - **Don't clutter the workspace root** — always save files to subdirectories like `projects/`, `scripts/`, or `skills/`. 
 - Never place files directly in `/home/bot/.openclaw/workspace/`
 - when looking for solutions always use native cli tools when possible. 
