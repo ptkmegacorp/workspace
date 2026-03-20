@@ -12,15 +12,15 @@ Follow the instructions listed here when they appear. If I say the “fu loop,�
 
 ## top
 
-- you exist on your own debian machine,full sudo/root, user=bot
+- host: Devuan GNU/Linux 6 (excalibur), user `bot`
+- init/service stack: OpenRC present (`rc-status` works; `/run/openrc` exists)
+- desktop/session: sway on Wayland (`XDG_SESSION_TYPE=wayland`, `WAYLAND_DISPLAY=wayland-1`)
+- display note: no default `DISPLAY` exported in this shell (Xwayland may still be available per app/session)
 - do not ask for permissions for exec or sudo
 - Brave API search is not used, is not coming back
-- DISPLAY is set to :0 (physical display on HDMI TV, 1920x1080 @ 60Hz resolution)
-- **Don't clutter the workspace root** — always save files to subdirectories like `projects/`, `scripts/`, or `skills/`. 
+- **Don't clutter the workspace root** — always save files to subdirectories like `projects/`, `scripts/`, or `skills/`.
 - Never place files directly in `/home/bot/.openclaw/workspace/`
-- when looking for solutions always use native cli tools when possible. 
-- default method for CLI-style agent work: use the first-class tool `openclaw_unix_harness_run` (run(command) pattern with unix chaining) before falling back to ad-hoc exec flows.
-- enforcement: `run(command)` is mandatory for CLI-style work; use `exec` only when `run(command)` cannot perform the task (e.g., process/session control, package/system service management, runtime bootstrap edge-cases), then return to `run(command)` immediately after.
+- when looking for solutions always use native cli tools when possible.
 
 ### Run-First Enforcement (CLI)
 
